@@ -1,0 +1,698 @@
+<title>Edunexus Runbook</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+  /* ---- Light palette: the complete token set lives on bare :root ---- */
+  :root {
+    --paper:      #fbfcfb;
+    --surface:    #ffffff;
+    --surface-2:  #f4f7f5;
+    --ink:        #10201a;
+    --muted:      #566b62;
+    --rule:       #dbe5e0;
+    --rule-soft:  #eaf0ed;
+    --accent:     #0e9d63;
+    --accent-ink: #076b43;
+    --accent-soft:#e4f6ee;
+    --warn:       #92580f;
+    --warn-soft:  #fbf1de;
+    --warn-rule:  #ecd5a8;
+    --dead:       #a83a34;
+    --dead-soft:  #fbeae8;
+    --dead-rule:  #eec7c3;
+    --shadow:     0 1px 2px rgba(16,32,26,.05), 0 8px 24px -12px rgba(16,32,26,.14);
+
+    --display: "Fraunces", "Iowan Old Style", Georgia, serif;
+    --body:    "Public Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono:    "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+    color-scheme: light;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:      #0a1210;
+      --surface:    #111c17;
+      --surface-2:  #16241e;
+      --ink:        #e7f0ec;
+      --muted:      #93a89e;
+      --rule:       #23342c;
+      --rule-soft:  #1a2822;
+      --accent:     #3ecf8e;
+      --accent-ink: #7ee0b4;
+      --accent-soft:#0f2c1f;
+      --warn:       #e3b571;
+      --warn-soft:  #2a2113;
+      --warn-rule:  #4a3a1e;
+      --dead:       #f0938c;
+      --dead-soft:  #2c1614;
+      --dead-rule:  #4d2622;
+      --shadow:     0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.6);
+      color-scheme: dark;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --paper:      #0a1210;
+    --surface:    #111c17;
+    --surface-2:  #16241e;
+    --ink:        #e7f0ec;
+    --muted:      #93a89e;
+    --rule:       #23342c;
+    --rule-soft:  #1a2822;
+    --accent:     #3ecf8e;
+    --accent-ink: #7ee0b4;
+    --accent-soft:#0f2c1f;
+    --warn:       #e3b571;
+    --warn-soft:  #2a2113;
+    --warn-rule:  #4a3a1e;
+    --dead:       #f0938c;
+    --dead-soft:  #2c1614;
+    --dead-rule:  #4d2622;
+    --shadow:     0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.6);
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 60rem; margin: 0 auto; padding: 0 1.5rem 6rem; }
+
+  /* ---- Masthead ---- */
+  .masthead { padding: 4rem 0 2rem; border-bottom: 1px solid var(--rule); }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: .72rem;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--accent-ink);
+    margin: 0 0 1rem;
+  }
+  h1 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: clamp(2.4rem, 6vw, 3.6rem);
+    line-height: 1.04;
+    letter-spacing: -.02em;
+    margin: 0 0 1rem;
+    text-wrap: balance;
+  }
+  .standfirst {
+    font-size: 1.12rem;
+    color: var(--muted);
+    max-width: 46ch;
+    margin: 0;
+  }
+  .deployment {
+    margin-top: 1.75rem;
+    font-family: var(--mono);
+    font-size: .82rem;
+    color: var(--muted);
+    display: flex;
+    flex-wrap: wrap;
+    gap: .4rem 1.25rem;
+  }
+  .deployment a { color: var(--accent-ink); text-decoration: none; border-bottom: 1px solid var(--accent-soft); }
+  .deployment a:hover { border-bottom-color: var(--accent); }
+
+  /* ---- Section furniture ---- */
+  section { padding-top: 3.5rem; }
+  h2 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 1.75rem;
+    letter-spacing: -.01em;
+    margin: 0 0 .5rem;
+    text-wrap: balance;
+  }
+  .section-note { color: var(--muted); margin: 0 0 1.75rem; max-width: 62ch; }
+  h3 {
+    font-family: var(--body);
+    font-weight: 700;
+    font-size: 1.02rem;
+    margin: 0 0 .15rem;
+    letter-spacing: -.005em;
+  }
+
+  /* ---- The setup chain ---- */
+  .chain {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: .5rem;
+    margin: 0 0 1.25rem;
+  }
+  .chain-step {
+    flex: 1 1 8.5rem;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-top: 3px solid var(--accent);
+    border-radius: 3px;
+    padding: .8rem .9rem;
+    box-shadow: var(--shadow);
+  }
+  .chain-step b { display: block; font-size: .95rem; }
+  .chain-step span { display: block; font-size: .78rem; color: var(--muted); margin-top: .2rem; line-height: 1.45; }
+  .chain-arrow {
+    align-self: center;
+    color: var(--accent);
+    font-size: 1.1rem;
+    line-height: 1;
+    flex: 0 0 auto;
+  }
+  @media (max-width: 640px) { .chain-arrow { transform: rotate(90deg); margin: -.1rem auto; } }
+
+  /* ---- Role tabs ---- */
+  .tabs {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    flex-wrap: wrap;
+    gap: .35rem;
+    padding: .75rem 0;
+    margin-top: 3.5rem;
+    background: var(--paper);
+    border-bottom: 1px solid var(--rule);
+  }
+  .tab {
+    font-family: var(--body);
+    font-size: .9rem;
+    font-weight: 600;
+    color: var(--muted);
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    padding: .42rem .95rem;
+    cursor: pointer;
+    transition: background .15s, color .15s, border-color .15s;
+  }
+  .tab:hover { color: var(--ink); background: var(--surface-2); }
+  .tab[aria-selected="true"] {
+    color: var(--accent-ink);
+    background: var(--accent-soft);
+    border-color: var(--accent);
+  }
+  .tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .role-intro {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem 2rem;
+    padding: 1.1rem 1.25rem;
+    background: var(--surface-2);
+    border: 1px solid var(--rule-soft);
+    border-radius: 4px;
+    margin-bottom: 2rem;
+  }
+  .role-intro div { flex: 1 1 13rem; }
+  .role-intro dt {
+    font-family: var(--mono);
+    font-size: .68rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: .3rem;
+  }
+  .role-intro dd { margin: 0; font-size: .92rem; }
+
+  /* ---- Goal cards ---- */
+  .goal {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 1.35rem 1.4rem;
+    margin-bottom: 1rem;
+    box-shadow: var(--shadow);
+  }
+  .goal-head { margin-bottom: 1rem; }
+  .goal-head p { margin: .2rem 0 0; color: var(--muted); font-size: .9rem; }
+
+  ol.steps { list-style: none; margin: 0; padding: 0; counter-reset: step; }
+  ol.steps > li {
+    counter-increment: step;
+    display: grid;
+    grid-template-columns: 1.6rem 1fr;
+    gap: .1rem .7rem;
+    padding: .5rem 0;
+    border-top: 1px solid var(--rule-soft);
+  }
+  ol.steps > li:first-child { border-top: none; padding-top: 0; }
+  ol.steps > li::before {
+    content: counter(step);
+    font-family: var(--mono);
+    font-size: .74rem;
+    font-weight: 600;
+    color: var(--accent-ink);
+    background: var(--accent-soft);
+    border-radius: 3px;
+    width: 1.6rem;
+    height: 1.35rem;
+    display: grid;
+    place-items: center;
+    margin-top: .12rem;
+  }
+  ol.steps .why {
+    grid-column: 2;
+    font-size: .84rem;
+    color: var(--muted);
+    margin-top: .15rem;
+  }
+
+  /* ---- Inline click targets ---- */
+  .crumb {
+    font-family: var(--mono);
+    font-size: .82rem;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .crumb i { font-style: normal; color: var(--accent); padding: 0 .15rem; }
+  .btn {
+    display: inline-block;
+    font-family: var(--body);
+    font-size: .82rem;
+    font-weight: 600;
+    background: var(--accent-soft);
+    color: var(--accent-ink);
+    border: 1px solid var(--accent);
+    border-radius: 3px;
+    padding: .05rem .45rem;
+    white-space: nowrap;
+  }
+  .field {
+    font-family: var(--mono);
+    font-size: .8rem;
+    background: var(--surface-2);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: .04rem .34rem;
+    white-space: nowrap;
+  }
+  code {
+    font-family: var(--mono);
+    font-size: .84em;
+    background: var(--surface-2);
+    border: 1px solid var(--rule-soft);
+    border-radius: 3px;
+    padding: .04rem .3rem;
+  }
+
+  /* ---- Callouts ---- */
+  .note {
+    border-left: 3px solid var(--warn);
+    background: var(--warn-soft);
+    border-radius: 0 3px 3px 0;
+    padding: .8rem 1rem;
+    margin: 1rem 0 0;
+    font-size: .9rem;
+  }
+  .note b { color: var(--warn); }
+  .note.stop { border-left-color: var(--dead); background: var(--dead-soft); }
+  .note.stop b { color: var(--dead); }
+
+  /* ---- Dead-ends table ---- */
+  .table-scroll { overflow-x: auto; border: 1px solid var(--rule); border-radius: 4px; background: var(--surface); }
+  table { border-collapse: collapse; width: 100%; font-size: .88rem; }
+  th, td { text-align: left; padding: .6rem .85rem; border-bottom: 1px solid var(--rule-soft); vertical-align: top; }
+  th {
+    font-family: var(--mono);
+    font-size: .68rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    background: var(--surface-2);
+    white-space: nowrap;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  td.path { font-family: var(--mono); font-size: .82rem; white-space: nowrap; }
+  .pill {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: .68rem;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    padding: .1rem .42rem;
+    border-radius: 3px;
+    white-space: nowrap;
+    border: 1px solid;
+  }
+  .pill.broken { color: var(--dead); background: var(--dead-soft); border-color: var(--dead-rule); }
+  .pill.stub   { color: var(--warn); background: var(--warn-soft); border-color: var(--warn-rule); }
+
+  footer {
+    margin-top: 4rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--rule);
+    font-size: .85rem;
+    color: var(--muted);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <p class="eyebrow">Operations guide</p>
+    <h1>Edunexus Runbook</h1>
+    <p class="standfirst">Click-by-click paths through the app for each of the four roles &mdash; and the setup order everything else depends on.</p>
+    <div class="deployment">
+      <span>Live at <a href="https://eugene-lms.workplacefiles.com">eugene-lms.workplacefiles.com</a></span>
+      <span>Cloudflare Workers + D1</span>
+      <span>Gemini 2.5 Flash</span>
+    </div>
+  </header>
+
+  <section id="chain">
+    <h2>Start here: the setup chain</h2>
+    <p class="section-note">These steps depend on each other and nothing in the UI enforces the order. Run them left to right on a fresh database, or the AI features will fail with a real error.</p>
+
+    <div class="chain">
+      <div class="chain-step">
+        <b>Academic Year</b>
+        <span>Mark one as current</span>
+      </div>
+      <div class="chain-arrow" aria-hidden="true">&rarr;</div>
+      <div class="chain-step">
+        <b>Subjects</b>
+        <span>Name + code</span>
+      </div>
+      <div class="chain-arrow" aria-hidden="true">&rarr;</div>
+      <div class="chain-step">
+        <b>Teachers</b>
+        <span>Each needs subjects assigned</span>
+      </div>
+      <div class="chain-arrow" aria-hidden="true">&rarr;</div>
+      <div class="chain-step">
+        <b>Classes</b>
+        <span>Year + teacher + subjects</span>
+      </div>
+      <div class="chain-arrow" aria-hidden="true">&rarr;</div>
+      <div class="chain-step">
+        <b>Students</b>
+        <span>Assigned to a class</span>
+      </div>
+    </div>
+
+    <div class="note">
+      <b>The one that catches everyone.</b> A subject and a teacher are linked in <em>two independent places</em>, and only one of them counts for timetables. Setting <span class="field">Teacher</span> on the subject form is not enough &mdash; timetable generation reads the teacher's own <span class="field">Subjects</span> field, so you must also edit the teacher under <span class="crumb">People <i>&rsaquo;</i> Teachers</span> and set it there. Miss this and generation fails with &ldquo;No Teachers assigned to these class subjects&rdquo;.
+    </div>
+  </section>
+
+  <div class="tabs" role="tablist" aria-label="Choose a role">
+    <button class="tab" role="tab" id="tab-admin"   aria-controls="panel-admin"   aria-selected="true">Admin</button>
+    <button class="tab" role="tab" id="tab-teacher" aria-controls="panel-teacher" aria-selected="false">Teacher</button>
+    <button class="tab" role="tab" id="tab-student" aria-controls="panel-student" aria-selected="false">Student</button>
+    <button class="tab" role="tab" id="tab-parent"  aria-controls="panel-parent"  aria-selected="false">Parent</button>
+    <button class="tab" role="tab" id="tab-visitor" aria-controls="panel-visitor" aria-selected="false">Visitor</button>
+  </div>
+
+  <!-- ================= ADMIN ================= -->
+  <section id="panel-admin" role="tabpanel" aria-labelledby="tab-admin">
+    <h2>Admin</h2>
+    <p class="section-note">Runs the whole system. The only role that can create academic years, classes, and users, review admissions, or generate timetables.</p>
+
+    <dl class="role-intro">
+      <div><dt>Lands on</dt><dd>Dashboard &mdash; student and teacher counts, active exams, system-wide activity</dd></div>
+      <div><dt>Sees in menu</dt><dd>Everything</dd></div>
+      <div><dt>Cannot</dt><dd>Delete their own account</dd></div>
+    </dl>
+
+    <article class="goal">
+      <div class="goal-head">
+        <h3>Goal: stand up a school from an empty database</h3>
+        <p>The full setup chain, roughly ten minutes.</p>
+      </div>
+      <ol class="steps">
+        <li><span><span class="crumb">System <i>&rsaquo;</i> Academic Years</span> &rarr; <span class="btn">Add New Year</span>. Fill <span class="field">Year Name</span>, <span class="field">Start Date</span>, <span class="field">End Date</span>, tick current.</span>
+          <span class="why">Nothing else can be created until a current year exists.</span></li>
+        <li><span><span class="crumb">Academics <i>&rsaquo;</i> Subjects</span> &rarr; <span class="btn">Create Subject</span>. Give it a <span class="field">Name</span> and a unique <span class="field">Code</span>.</span></li>
+        <li><span><span class="crumb">People <i>&rsaquo;</i> Teachers</span> &rarr; <span class="btn">Add Teacher</span>. Set <span class="field">Full Name</span>, <span class="field">Email Address</span>, <span class="field">Password</span>, and <strong><span class="field">Subjects</span></strong>.</span>
+          <span class="why">The Subjects field here is the one timetable generation reads.</span></li>
+        <li><span><span class="crumb">Academics <i>&rsaquo;</i> Classes</span> &rarr; <span class="btn">Create Class</span>. Set <span class="field">Name</span>, <span class="field">Year</span>, class teacher, <span class="field">Subjects</span>, <span class="field">Max Capacity</span>.</span>
+          <span class="why">A class with no subjects attached cannot produce a timetable.</span></li>
+        <li><span><span class="crumb">People <i>&rsaquo;</i> Students</span> &rarr; <span class="btn">Add Student</span>, setting <span class="field">Class</span>.</span>
+          <span class="why">Students only ever see exams for the class assigned here.</span></li>
+      </ol>
+    </article>
+
+    <article class="goal">
+      <div class="goal-head">
+        <h3>Goal: generate a weekly timetable</h3>
+        <p>Gemini schedules the week, avoiding teacher clashes across classes.</p>
+      </div>
+      <ol class="steps">
+        <li><span><span class="crumb">Academics <i>&rsaquo;</i> Timetable</span></span></li>
+        <li><span>Pick <span class="field">Academic Year</span> and <span class="field">Class</span>, then set <span class="field">Start Time</span>, <span class="field">End Time</span>, <span class="field">Periods / Day</span>.</span></li>
+        <li><span>Click <span class="btn">Generate with AI</span>. The button becomes &ldquo;Optimizing Schedule&hellip;&rdquo;.</span></li>
+        <li><span>Wait. The grid fills in on its own.</span>
+          <span class="why">Takes about 10&ndash;12 seconds. The page refetches after 5, so it is normal to see &ldquo;no schedule&rdquo; once before it appears &mdash; reselect the class to refresh.</span></li>
+      </ol>
+      <div class="note">
+        <b>If it never appears</b>, the class is missing subjects, or no teacher has those subjects on their own record. See the setup-chain warning above.
+      </div>
+    </article>
+
+    <article class="goal">
+      <div class="goal-head">
+        <h3>Goal: review an admissions application</h3>
+        <p>Applications arrive from the public <code>/apply</code> page with no account attached.</p>
+      </div>
+      <ol class="steps">
+        <li><span><span class="crumb">Admissions <i>&rsaquo;</i> Applications</span></span></li>
+        <li><span>Filter by status, or search by applicant name or email.</span></li>
+        <li><span>Use the row's status dropdown to move it: <em>pending &rarr; reviewing &rarr; accepted</em> or <em>rejected</em>.</span></li>
+        <li><span>To enrol an accepted applicant, create them separately under <span class="crumb">People <i>&rsaquo;</i> Students</span>.</span>
+          <span class="why">Accepting does not create an account &mdash; the two are not yet wired together.</span></li>
+      </ol>
+    </article>
+  </section>
+
+  <!-- ================= TEACHER ================= -->
+  <section id="panel-teacher" role="tabpanel" aria-labelledby="tab-teacher" hidden>
+    <h2>Teacher</h2>
+    <p class="section-note">Builds and publishes quizzes. Sees only their own exams &mdash; the list is filtered by author server-side, not just hidden in the UI.</p>
+
+    <dl class="role-intro">
+      <div><dt>Lands on</dt><dd>Dashboard &mdash; own class count, pending grading, own activity</dd></div>
+      <div><dt>Sees in menu</dt><dd>Dashboard, Academics, Learning, People</dd></div>
+      <div><dt>Cannot</dt><dd>Create classes or academic years, generate timetables, view admissions</dd></div>
+    </dl>
+
+    <article class="goal">
+      <div class="goal-head">
+        <h3>Goal: create an AI quiz and publish it to a class</h3>
+        <p>Two distinct actions &mdash; generating does not publish.</p>
+      </div>
+      <ol class="steps">
+        <li><span><span class="crumb">Learning (LMS) <i>&rsaquo;</i> Exams</span>, or <span class="btn">Create Quiz</span> on the dashboard.</span></li>
+        <li><span>Click <span class="btn">New AI Quiz</span>.</span></li>
+        <li><span>Fill the dialog: <span class="field">Subject</span>, <span class="field">Class</span>, <span class="field">Topic / Concept</span>, difficulty, and question count (1&ndash;20).</span></li>
+        <li><span>Submit. You get &ldquo;AI is generating the exam!&rdquo; straight away.</span>
+          <span class="why">The response returns immediately; Gemini writes the questions in the background, usually within 5&ndash;6 seconds.</span></li>
+        <li><span>Reload the list, then click <span class="btn">Manage Questions</span> on the new card to check what it wrote.</span></li>
+        <li><span>Click <span class="btn">Publish Exam</span>.</span>
+          <span class="why">Generated exams are created inactive on purpose. Until you publish, no student can see it.</span></li>
+      </ol>
+      <div class="note">
+        <b>Review before publishing.</b> The questions are model output. You can also <span class="btn">Unpublish Exam</span> or <span class="btn">Delete Exam</span> from the same screen.
+      </div>
+    </article>
+
+    <article class="goal">
+      <div class="goal-head">
+        <h3>Goal: see how students did</h3>
+      </div>
+      <ol class="steps">
+        <li><span><span class="crumb">Learning (LMS) <i>&rsaquo;</i> Exams</span> &rarr; <span class="btn">Manage Questions</span> on the exam.</span></li>
+        <li><span>Correct answers are visible to you here, and stripped from what students receive.</span></li>
+      </ol>
+      <div class="note stop">
+        <b>Gap worth knowing.</b> There is no per-class results table in the UI. The dashboard shows a &ldquo;pending grading&rdquo; count, and the API can return any student's submission, but no screen lists them yet.
+      </div>
+    </article>
+  </section>
+
+  <!-- ================= STUDENT ================= -->
+  <section id="panel-student" role="tabpanel" aria-labelledby="tab-student" hidden>
+    <h2>Student</h2>
+    <p class="section-note">Takes quizzes and reads their timetable. Scoped tightly to their own class, enforced on the server.</p>
+
+    <dl class="role-intro">
+      <div><dt>Lands on</dt><dd>Dashboard &mdash; next exam, pending assignments, attendance</dd></div>
+      <div><dt>Sees</dt><dd>Only <em>published</em> exams for their own class</dd></div>
+      <div><dt>Cannot</dt><dd>See correct answers before submitting, or submit twice</dd></div>
+    </dl>
+
+    <article class="goal">
+      <div class="goal-head">
+        <h3>Goal: take a quiz and see the result</h3>
+        <p>Grading is instant &mdash; the score comes back in the submit response.</p>
+      </div>
+      <ol class="steps">
+        <li><span>Sign in at <code>/login</code>. You land on the dashboard.</span></li>
+        <li><span><span class="crumb">Learning (LMS) <i>&rsaquo;</i> Exams</span>, or <span class="btn">Quizzes &amp; Exams</span> under Quick Links.</span></li>
+        <li><span>Click <span class="btn">Start Quiz</span> on a card.</span>
+          <span class="why">An empty list means nothing is published for your class yet, not that something is broken.</span></li>
+        <li><span>Answer each question, then click <span class="btn">Submit Exam</span>.</span></li>
+        <li><span>The view switches to <em>Review Answers</em>, marking your choices against the correct ones.</span>
+          <span class="why">Correct answers are withheld by the server until you have submitted.</span></li>
+      </ol>
+      <div class="note">
+        <b>One attempt only.</b> A second submission is refused with &ldquo;Exam already submitted&rdquo;. There is no timer enforcement &mdash; the duration is displayed but not policed.
+      </div>
+    </article>
+
+    <article class="goal">
+      <div class="goal-head">
+        <h3>Goal: check the week's timetable</h3>
+      </div>
+      <ol class="steps">
+        <li><span><span class="crumb">Academics <i>&rsaquo;</i> Timetable</span>, or <span class="btn">View Timetable</span> under Quick Links.</span></li>
+        <li><span>The grid shows subjects, teachers, and times. Generation controls are hidden for students.</span></li>
+      </ol>
+    </article>
+  </section>
+
+  <!-- ================= PARENT ================= -->
+  <section id="panel-parent" role="tabpanel" aria-labelledby="tab-parent" hidden>
+    <h2>Parent</h2>
+    <p class="section-note">Defined everywhere but built nowhere. An admin can create parent accounts and they can sign in &mdash; but there is no parent experience behind the login.</p>
+
+    <dl class="role-intro">
+      <div><dt>Lands on</dt><dd>An empty student-shaped dashboard</dd></div>
+      <div><dt>Sees in menu</dt><dd>Dashboard, and an Academics group whose only visible item is broken</dd></div>
+      <div><dt>Cannot</dt><dd>View exams, classes, or subjects &mdash; all return 403</dd></div>
+    </dl>
+
+    <article class="goal">
+      <div class="goal-head">
+        <h3>What actually happens</h3>
+        <p>Traced through both the UI and the API.</p>
+      </div>
+      <ol class="steps">
+        <li><span>They sign in successfully &mdash; the role is valid in the database.</span></li>
+        <li><span>The dashboard falls through to the <em>student</em> cards, and the API returns no stats for parents, so it renders <span class="field">0%</span>, <span class="field">0</span>, <span class="field">None</span>.</span></li>
+        <li><span>The menu shows Academics, but Classes, Subjects, and Timetable are all gated to other roles. The single item left is <em>Attendance</em>, which has no page behind it.</span></li>
+      </ol>
+      <div class="note stop">
+        <b>Recommendation: hide the role until it works.</b> Removing <em>parent</em> from the user-creation dropdown takes minutes and stops anyone being handed an account that leads nowhere. Building it properly needs a parent&rarr;child link on the user record, which does not exist yet, and Attendance has no data model at all &mdash; the attendance percentages elsewhere in the app are hardcoded placeholders.
+      </div>
+    </article>
+  </section>
+
+  <!-- ================= VISITOR ================= -->
+  <section id="panel-visitor" role="tabpanel" aria-labelledby="tab-visitor" hidden>
+    <h2>Visitor</h2>
+    <p class="section-note">Anyone with the link and no account. The only unauthenticated write path in the whole API.</p>
+
+    <article class="goal">
+      <div class="goal-head">
+        <h3>Goal: apply without an account</h3>
+      </div>
+      <ol class="steps">
+        <li><span>On the landing page, click <span class="btn">Apply Now</span> or <span class="btn">Start Application</span>. Both go to <code>/apply</code>.</span></li>
+        <li><span>Fill <span class="field">Full name</span>, <span class="field">Email</span>, and <span class="field">Programme</span>. Phone and the note are optional.</span></li>
+        <li><span>Click <span class="btn">Submit application</span>. A confirmation screen replaces the form.</span></li>
+        <li><span>It lands in the admin queue as <em>pending</em>.</span>
+          <span class="why">Applying twice for the same programme with the same email is refused while the first is still pending.</span></li>
+      </ol>
+    </article>
+
+    <article class="goal">
+      <div class="goal-head">
+        <h3>Goal: get into the app</h3>
+      </div>
+      <ol class="steps">
+        <li><span>Click <span class="btn">Sign In</span> in the navbar, or go to <code>/login</code>.</span></li>
+        <li><span>Enter <span class="field">Email Address</span> and <span class="field">Password</span>, click <span class="btn">Sign In</span>.</span></li>
+      </ol>
+      <div class="note">
+        <b>There is no self-registration.</b> Accounts are created by an admin. The first admin on a fresh database has to be seeded from the command line &mdash; registration is admin-only, so nobody exists who could authorise the first one.
+      </div>
+    </article>
+  </section>
+
+  <!-- ================= DEAD ENDS ================= -->
+  <section id="gaps">
+    <h2>Menu items with nothing behind them</h2>
+    <p class="section-note">These appear in the sidebar for the roles noted but have no page. Clicking one shows React Router's raw developer error screen rather than a friendly 404.</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th>Menu item</th><th>Route</th><th>Seen by</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Attendance</td><td class="path">/attendance</td><td>Everyone</td><td><span class="pill stub">No model</span></td></tr>
+          <tr><td>Assignments</td><td class="path">/lms/assignments</td><td>Teacher, student, admin</td><td><span class="pill broken">No page</span></td></tr>
+          <tr><td>Study Materials</td><td class="path">/lms/materials</td><td>Teacher, student, admin</td><td><span class="pill broken">No page</span></td></tr>
+          <tr><td>Fee Collection</td><td class="path">/finance/fees</td><td>Admin</td><td><span class="pill broken">No page</span></td></tr>
+          <tr><td>Expenses</td><td class="path">/finance/expenses</td><td>Admin</td><td><span class="pill broken">No page</span></td></tr>
+          <tr><td>Salary</td><td class="path">/finance/salary</td><td>Admin</td><td><span class="pill broken">No page</span></td></tr>
+          <tr><td>School Settings</td><td class="path">/settings/general</td><td>Admin</td><td><span class="pill broken">No page</span></td></tr>
+          <tr><td>Roles &amp; Permissions</td><td class="path">/settings/roles</td><td>Admin</td><td><span class="pill broken">No page</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note">
+      <b>Two ways to close this.</b> Hide the unbuilt items until they exist, or add a catch-all route so they degrade to a proper &ldquo;not built yet&rdquo; page instead of a developer error. Hiding them is the smaller change.
+    </div>
+  </section>
+
+  <section id="numbers">
+    <h2>What to expect while waiting</h2>
+    <p class="section-note">Both AI features answer immediately and finish in the background, so the UI is briefly out of date by design.</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th>Action</th><th>Response</th><th>Finishes in</th><th>Meanwhile</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Generate quiz</td><td class="path">202 Accepted</td><td>~5&ndash;6s</td><td>Exam exists with no questions, unpublished</td></tr>
+          <tr><td>Generate timetable</td><td class="path">200 OK</td><td>~10&ndash;12s</td><td>Timetable reads as &ldquo;not found&rdquo; until ready</td></tr>
+          <tr><td>Submit exam</td><td class="path">201 Created</td><td>Immediate</td><td>Score returned in the response</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>
+    <p>Verified against the deployed build on <code>eugene-lms.workplacefiles.com</code>. Button labels and routes are taken from the source, not paraphrased.</p>
+  </footer>
+</div>
+
+<script>
+  (function () {
+    var tabs = Array.prototype.slice.call(document.querySelectorAll('[role="tab"]'));
+
+    function select(tab) {
+      tabs.forEach(function (t) {
+        var selected = t === tab;
+        t.setAttribute('aria-selected', String(selected));
+        document.getElementById(t.getAttribute('aria-controls')).hidden = !selected;
+      });
+    }
+
+    tabs.forEach(function (tab, i) {
+      tab.addEventListener('click', function () { select(tab); });
+      tab.addEventListener('keydown', function (e) {
+        var next = null;
+        if (e.key === 'ArrowRight') next = tabs[(i + 1) % tabs.length];
+        if (e.key === 'ArrowLeft') next = tabs[(i - 1 + tabs.length) % tabs.length];
+        if (next) { e.preventDefault(); next.focus(); select(next); }
+      });
+    });
+  })();
+</script>

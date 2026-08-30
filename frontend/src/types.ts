@@ -82,3 +82,17 @@ export interface schedule {
   day: string; // "Monday", "Tuesday", etc.
   periods: period[];
 }
+
+export type applicationStatus = "pending" | "reviewing" | "accepted" | "rejected";
+
+export interface application {
+  _id: string;
+  fullName: string;
+  email: string;
+  phone?: string | null;
+  program: string;
+  message?: string | null;
+  status: applicationStatus;
+  createdAt: string;
+  updatedAt: string;
+}

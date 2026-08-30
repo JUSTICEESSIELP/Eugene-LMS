@@ -202,7 +202,7 @@ const UniversalUserForm = ({ type, initialData, onSuccess, role }: Props) => {
   const showSubjectSelector = !isLogin && role === "teacher";
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)}>
+    <form noValidate onSubmit={form.handleSubmit(onSubmit)}>
       <FieldGroup>
         <div className="grid grid-cols-2 gap-4 w-full">
           {!isLogin && (

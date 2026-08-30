@@ -1,6 +1,8 @@
 import { createBrowserRouter } from "react-router"; // Keeping your requested import
 import Home from "@/pages/Home";
 import Login from "@/pages/Login";
+import Apply from "@/pages/Apply";
+import Applications from "@/pages/admissions/Applications";
 import PrivateRoutes from "@/pages/routes/PrivateRoutes";
 import Dashboard from "@/pages/Dashboard";
 import AcademicYear from "@/pages/settings/academic-year";
@@ -17,6 +19,7 @@ export const router = createBrowserRouter([
       // public routes
       { index: true, element: <Home /> },
       { path: "login", element: <Login /> },
+      { path: "apply", element: <Apply /> },
       // protected routes would go here
       {
         element: <PrivateRoutes />, // Assuming PrivateRoutes is imported
@@ -24,6 +27,7 @@ export const router = createBrowserRouter([
           { path: "dashboard", element: <Dashboard /> },
           { path: "activities-log", element: <Dashboard /> },
           { path: "settings/academic-years", element: <AcademicYear /> },
+          { path: "admissions", element: <Applications /> },
           {
             path: "users/students",
             element: (

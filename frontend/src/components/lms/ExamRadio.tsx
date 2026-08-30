@@ -1,5 +1,5 @@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import type { question, Submission } from "@/type";
+import type { question, Submission } from "@/types";
 import type { Dispatch, SetStateAction } from "react";
 import { Label } from "@/components/ui/label";
 import { CheckCircle2, XCircle } from "lucide-react";

@@ -1,3 +1,4 @@
+import { Link } from "react-router";
 import Navbar from "@/components/home/Navbar";
 import Hero from "@/components/home/Hero";
 import Stats from "@/components/home/Stats";
@@ -80,12 +81,18 @@ const Home = () => {
                 the first step towards a boundary-breaking career today.
               </p>
               <div className="flex flex-col sm:flex-row justify-center gap-4">
-                <button className="bg-[#3ecf8e] text-black px-10 py-5 rounded-xl font-bold text-lg hover:bg-[#34b27b] transition-all transform hover:scale-105 shadow-lg shadow-[#3ecf8e]/20">
+                <Link
+                  to="/apply"
+                  className="bg-[#3ecf8e] text-black px-10 py-5 rounded-xl font-bold text-lg hover:bg-[#34b27b] transition-all transform hover:scale-105 shadow-lg shadow-[#3ecf8e]/20"
+                >
                   Apply Now
-                </button>
-                <button className="bg-transparent border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white px-10 py-5 rounded-xl font-bold text-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all">
+                </Link>
+                <a
+                  href="mailto:admissions@eugene-lms.com?subject=Admissions%20enquiry"
+                  className="bg-transparent border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white px-10 py-5 rounded-xl font-bold text-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
+                >
                   Contact Admissions
-                </button>
+                </a>
               </div>
             </div>
           </div>

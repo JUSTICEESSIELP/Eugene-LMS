@@ -82,7 +82,7 @@ export default function Dashboard() {
             </Button>
           )}
           {user?.role === "teacher" && (
-            <Button onClick={() => navigate("/lms/quizzes")}>
+            <Button onClick={() => navigate("/lms/exams")}>
               Create Quiz
             </Button>
           )}
@@ -156,9 +156,9 @@ export default function Dashboard() {
               <Button
                 variant="outline"
                 className="justify-start"
-                onClick={() => navigate("/lms/materials")}
+                onClick={() => navigate("/lms/exams")}
               >
-                <FileText className="mr-2 h-4 w-4" /> Study Materials
+                <FileText className="mr-2 h-4 w-4" /> Quizzes & Exams
               </Button>
               {user?.role === "admin" && (
                 <Button

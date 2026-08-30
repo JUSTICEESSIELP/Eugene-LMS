@@ -1,0 +1,154 @@
+import { Hono } from "hono";
+import type { AppEnv } from "../types";
+import { authorize, protect } from "../lib/auth";
+import { logActivity, lookup, meta, paginate, populated } from "../lib/db";
+import { newId, now } from "../lib/ids";
+import { classOut } from "../lib/rows";
+
+const classes = new Hono<AppEnv>();
+
+// GET /api/classes — Private/Admin, academicYear + classTeacher populated
+classes.get("/", protect, authorize(["admin"]), async (c) => {
+  const url = new URL(c.req.url);
+  const { page, limit, offset } = paginate(url);
+  const search = url.searchParams.get("search");
+
+  const clause = search ? "WHERE name LIKE ? COLLATE NOCASE" : "";
+  const args = search ? [`%${search}%`] : [];
+
+  const [countRow, list] = await Promise.all([
+    c.env.DB.prepare(`SELECT COUNT(*) AS total FROM classes ${clause}`).bind(...args).first(),
+    c.env.DB.prepare(
+      `SELECT * FROM classes ${clause} ORDER BY createdAt DESC LIMIT ? OFFSET ?`,
+    )
+      .bind(...args, limit, offset)
+      .all(),
+  ]);
+
+  const rows = (list.results as any[]).map(classOut);
+  const [yearMap, teacherMap] = await Promise.all([
+    lookup(c.env.DB, "academic_years", rows.map((r) => r.academicYear), ["name"]),
+    lookup(c.env.DB, "users", rows.map((r) => r.classTeacher), ["name", "email"]),
+  ]);
+
+  return c.json({
+    classes: rows.map((r) => ({
+      ...r,
+      academicYear: populated(yearMap, r.academicYear),
+      classTeacher: populated(teacherMap, r.classTeacher),
+    })),
+    pagination: meta(Number(countRow?.total ?? 0), page, limit),
+  });
+});
+
+// POST /api/classes/create — Private/Admin
+classes.post("/create", protect, authorize(["admin"]), async (c) => {
+  const body = await c.req.json<any>().catch(() => ({}));
+  const { name, academicYear, classTeacher, capacity, subjects, students } = body;
+  if (!name || !academicYear) {
+    return c.json({ message: "name and academicYear are required" }, 400);
+  }
+
+  const exists = await c.env.DB.prepare(
+    "SELECT id FROM classes WHERE name = ? AND academicYear = ?",
+  )
+    .bind(name, academicYear)
+    .first();
+  if (exists) {
+    return c.json(
+      { message: "Class with this name already exists for the specified academic year." },
+      400,
+    );
+  }
+
+  const ts = now();
+  const id = newId();
+  await c.env.DB.prepare(
+    `INSERT INTO classes (id, name, academicYear, classTeacher, subjects, students, capacity, createdAt, updatedAt)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  )
+    .bind(
+      id,
+      name,
+      academicYear,
+      classTeacher || null,
+      JSON.stringify(Array.isArray(subjects) ? subjects : []),
+      JSON.stringify(Array.isArray(students) ? students : []),
+      Number(capacity) || 40,
+      ts,
+      ts,
+    )
+    .run();
+
+  await logActivity(c.env, {
+    userId: c.get("user")._id,
+    action: `Created new class: ${name}`,
+  });
+
+  const row = await c.env.DB.prepare("SELECT * FROM classes WHERE id = ?").bind(id).first();
+  return c.json(classOut(row!), 201);
+});
+
+// PUT|PATCH /api/classes/update/:id — Private/Admin.
+// The UI sends PUT here while the old router only bound PATCH; accept both.
+classes.on(["PUT", "PATCH"], "/update/:id", protect, authorize(["admin"]), async (c) => {
+  const id = c.req.param("id");
+  const row = await c.env.DB.prepare("SELECT * FROM classes WHERE id = ?").bind(id).first();
+  if (!row) return c.json({ message: "Class not found" }, 404);
+
+  const body = await c.req.json<any>().catch(() => ({}));
+  const name = body.name ?? row.name;
+  const academicYear = body.academicYear ?? row.academicYear;
+  const classTeacher =
+    body.classTeacher !== undefined ? body.classTeacher || null : row.classTeacher;
+  const subjects = Array.isArray(body.subjects) ? JSON.stringify(body.subjects) : row.subjects;
+  const students = Array.isArray(body.students) ? JSON.stringify(body.students) : row.students;
+  const capacity = body.capacity !== undefined ? Number(body.capacity) : row.capacity;
+
+  // The unique index is (name, academicYear) — check before we hit it.
+  if (name !== row.name || academicYear !== row.academicYear) {
+    const clash = await c.env.DB.prepare(
+      "SELECT id FROM classes WHERE name = ? AND academicYear = ? AND id != ?",
+    )
+      .bind(name, academicYear, id)
+      .first();
+    if (clash) {
+      return c.json(
+        { message: "Class with this name already exists for the specified academic year." },
+        400,
+      );
+    }
+  }
+
+  await c.env.DB.prepare(
+    `UPDATE classes SET name = ?, academicYear = ?, classTeacher = ?, subjects = ?,
+       students = ?, capacity = ?, updatedAt = ?
+     WHERE id = ?`,
+  )
+    .bind(name, academicYear, classTeacher, subjects, students, capacity, now(), id)
+    .run();
+
+  await logActivity(c.env, {
+    userId: c.get("user")._id,
+    action: `Updated class: ${name}`,
+  });
+
+  const updated = await c.env.DB.prepare("SELECT * FROM classes WHERE id = ?").bind(id).first();
+  return c.json(classOut(updated!));
+});
+
+// DELETE /api/classes/delete/:id — Private/Admin
+classes.delete("/delete/:id", protect, authorize(["admin"]), async (c) => {
+  const id = c.req.param("id");
+  const row = await c.env.DB.prepare("SELECT * FROM classes WHERE id = ?").bind(id).first();
+  if (!row) return c.json({ message: "Class not found" }, 404);
+
+  await c.env.DB.prepare("DELETE FROM classes WHERE id = ?").bind(id).run();
+  await logActivity(c.env, {
+    userId: c.get("user")._id,
+    action: `Deleted class: ${row.name}`,
+  });
+  return c.json({ message: "Class removed" });
+});
+
+export default classes;

@@ -7,6 +7,7 @@ import {
   Users,
   LayoutDashboard,
   Banknote,
+  ClipboardList,
   type LucideIcon,
   LogOut,
 } from "lucide-react";
@@ -69,7 +70,7 @@ export const sidebardata = {
         },
         {
           title: "Activities Log",
-          url: "/activies-log",
+          url: "/activities-log",
           roles: ["admin"], // Restricted to Admin
         },
       ],
@@ -136,6 +137,13 @@ export const sidebardata = {
           roles: ["admin"], // Only Admin can see other Admins
         },
       ],
+    },
+    {
+      title: "Admissions",
+      url: "/admissions",
+      icon: ClipboardList,
+      roles: ["admin"],
+      items: [{ title: "Applications", url: "/admissions", roles: ["admin"] }],
     },
     {
       title: "Finance",

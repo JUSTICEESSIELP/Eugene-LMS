@@ -103,7 +103,7 @@ const Exam = () => {
         <p className="text-muted-foreground">
           This exam is currently closed or has expired.
         </p>
-        <Button onClick={() => navigate("/lms/quizzes")}>Back to List</Button>
+        <Button onClick={() => navigate("/lms/exams")}>Back to List</Button>
       </div>
     );
   }
@@ -113,7 +113,7 @@ const Exam = () => {
     try {
       await api.delete(`/exams/${id}`); // Ensure delete route exists
       toast.success("Exam deleted");
-      navigate("/lms/quizzes");
+      navigate("/lms/exams");
     } catch (error) {
       toast.error("Failed to delete");
     }
@@ -235,7 +235,7 @@ const Exam = () => {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate("/lms/quizzes")}
+              onClick={() => navigate("/lms/exams")}
             >
               <ArrowLeft className="h-4 w-4 mr-2" /> Back to Quizzes
             </Button>

@@ -6,7 +6,7 @@ import {
 } from "react-hook-form";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { type ComponentProps } from "react";
+import { type ComponentProps, useId } from "react";
 
 // Extend standard Input props but override specific ones we handle manually
 interface CustomInputProps<T extends FieldValues>
@@ -23,16 +23,19 @@ export function CustomInput<T extends FieldValues>({
   label,
   description,
   disabled,
+  id,
   ...props
 }: CustomInputProps<T>) {
+  const generatedId = useId();
+  const inputId = id ?? `${name}-${generatedId}`;
   return (
     <Controller
       name={name}
       control={control}
       render={({ field, fieldState }) => (
         <Field data-invalid={fieldState.invalid}>
-          <FieldLabel>{label}</FieldLabel>
-          <Input {...field} {...props} />
+          <FieldLabel htmlFor={inputId}>{label}</FieldLabel>
+          <Input id={inputId} {...field} {...props} />
 
           {description && (
             <p className="text-sm text-muted-foreground">{description}</p>

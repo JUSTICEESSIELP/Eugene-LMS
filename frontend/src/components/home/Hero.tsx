@@ -1,4 +1,5 @@
 import { ArrowRight, ChevronRight, Play } from "lucide-react";
+import { Link } from "react-router";
 
 const Hero = () => {
   return (
@@ -32,14 +33,20 @@ const Hero = () => {
             </p>
 
             <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4">
-              <button className="w-full sm:w-auto flex items-center justify-center space-x-2 bg-[#3ecf8e] text-black px-8 py-4 rounded-lg font-bold hover:bg-[#34b27b] transition-all transform hover:translate-y-[-2px] shadow-lg shadow-[#3ecf8e]/20">
+              <Link
+                to="/apply"
+                className="w-full sm:w-auto flex items-center justify-center space-x-2 bg-[#3ecf8e] text-black px-8 py-4 rounded-lg font-bold hover:bg-[#34b27b] transition-all transform hover:translate-y-[-2px] shadow-lg shadow-[#3ecf8e]/20"
+              >
                 <span>Start Application</span>
                 <ArrowRight className="w-5 h-5" />
-              </button>
-              <button className="w-full sm:w-auto flex items-center justify-center space-x-2 bg-transparent text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 hover:border-[#3ecf8e] px-8 py-4 rounded-lg font-bold transition-all">
+              </Link>
+              <a
+                href="#programs"
+                className="w-full sm:w-auto flex items-center justify-center space-x-2 bg-transparent text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 hover:border-[#3ecf8e] px-8 py-4 rounded-lg font-bold transition-all"
+              >
                 <Play className="w-4 h-4 text-[#3ecf8e] fill-[#3ecf8e]" />
-                <span>Watch Virtual Tour</span>
-              </button>
+                <span>Explore Programs</span>
+              </a>
             </div>
 
             <div className="flex items-center space-x-6 pt-4 border-t border-gray-200 dark:border-gray-800">

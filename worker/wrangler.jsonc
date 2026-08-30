@@ -1,0 +1,42 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "eugenelms",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "account_id": "7fe15942e45de78396088b33436a22cf",
+
+  // The built React SPA ships with the Worker. Only /api/* reaches the
+  // Worker script; everything else is served from the asset store, with
+  // client-side routes falling back to index.html.
+  "assets": {
+    "directory": "../frontend/dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api", "/api/*"]
+  },
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "edunexus",
+      "database_id": "2283bc0d-25a9-425f-82c0-1766f86b3b6e"
+    }
+  ],
+
+  // Fallback for the AI features when no Gemini key is configured.
+  "ai": { "binding": "AI" },
+
+  "routes": [
+    {
+      "pattern": "eugene-lms.workplacefiles.com",
+      "custom_domain": true
+    }
+  ],
+
+  "observability": { "enabled": true },
+
+  "vars": {
+    "GEMINI_MODEL": "gemini-2.5-flash"
+  }
+}

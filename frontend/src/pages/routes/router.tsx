@@ -12,9 +12,11 @@ import { Subjects } from "@/pages/academics/Subjects";
 import Timetable from "@/pages/academics/Timetable";
 import Exams from "@/pages/lms/Exams";
 import Exam from "../lms/Exam";
+import RouteError, { NotFound } from "@/pages/routes/RouteError";
 
 export const router = createBrowserRouter([
   {
+    errorElement: <RouteError />,
     children: [
       // public routes
       { index: true, element: <Home /> },
@@ -90,6 +92,9 @@ export const router = createBrowserRouter([
           },
         ],
       },
+      // Anything else: rendered with the sidebar when signed in, so a wrong
+      // turn never strands anyone outside the app.
+      { path: "*", element: <NotFound /> },
     ],
   },
 ]);

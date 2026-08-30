@@ -102,7 +102,7 @@ const Classes = () => {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Classes</h1>
+          <h1 className="display-page text-3xl">Classes</h1>
           <p className="text-muted-foreground">
             Manage grades, sections, and teacher assignments.
           </p>

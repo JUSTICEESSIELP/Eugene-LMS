@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Veya">
+  <rect width="64" height="64" rx="16" fill="#5769E7" />
+  <path d="M16 18h9.6l6.4 20.4L38.4 18H48L36.8 50h-9.6L16 18z" fill="#F3EDE7" />
+  <circle cx="46" cy="20" r="5" fill="#F3EDE7" />
+</svg>

@@ -4,7 +4,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Link } from "react-router";
 import { toast } from "sonner";
-import { ArrowLeft, CheckCircle2, GraduationCap, Loader2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Loader2 } from "lucide-react";
+import Logo from "@/components/global/Logo";
 import { api } from "@/lib/api";
 
 import { Button } from "@/components/ui/button";
@@ -63,13 +64,13 @@ const Apply = () => {
     return (
       <div className="min-h-svh flex items-center justify-center p-6">
         <div className="max-w-md text-center space-y-6">
-          <CheckCircle2 className="w-16 h-16 text-[#3ecf8e] mx-auto" />
-          <h1 className="text-3xl font-bold">Application received</h1>
+          <CheckCircle2 className="w-16 h-16 text-brand mx-auto" />
+          <h1 className="display-page text-3xl">Application received</h1>
           <p className="text-muted-foreground">
-            Thanks for applying to Edunexus. Our admissions team will review your
+            Thanks for applying to Veya. Our admissions team will review your
             application and get back to you by email.
           </p>
-          <Button asChild className="bg-[#3ecf8e] text-black hover:bg-[#34b27b]">
+          <Button asChild className="bg-brand text-white hover:bg-brand-strong">
             <Link to="/">Back to homepage</Link>
           </Button>
         </div>
@@ -82,21 +83,14 @@ const Apply = () => {
       <div className="max-w-2xl mx-auto px-4 sm:px-6 py-12 space-y-8">
         <Link
           to="/"
-          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-[#3ecf8e] transition-colors"
+          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-brand transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to homepage
         </Link>
 
         <div className="space-y-3">
-          <div className="inline-flex items-center gap-2">
-            <div className="bg-[#3ecf8e] p-1.5 rounded-lg">
-              <GraduationCap className="text-black w-5 h-5" />
-            </div>
-            <span className="text-xl font-bold tracking-tight">
-              EDU<span className="text-[#3ecf8e]">NEXUS</span>
-            </span>
-          </div>
+          <Logo markClassName="h-8 w-8" />
           <h1 className="text-4xl font-bold tracking-tight">Start your application</h1>
           <p className="text-muted-foreground">
             Tell us who you are and what you want to study. It takes about a minute —
@@ -189,7 +183,7 @@ const Apply = () => {
           <Button
             type="submit"
             disabled={loading}
-            className="w-full bg-[#3ecf8e] text-black hover:bg-[#34b27b] font-bold py-6 text-base"
+            className="w-full bg-brand text-white hover:bg-brand-strong font-bold py-6 text-base"
           >
             {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
             Submit application
@@ -197,7 +191,7 @@ const Apply = () => {
 
           <p className="text-sm text-muted-foreground text-center">
             Already a student or staff member?{" "}
-            <Link to="/login" className="text-[#3ecf8e] font-medium hover:underline">
+            <Link to="/login" className="text-brand font-medium hover:underline">
               Sign in
             </Link>
           </p>

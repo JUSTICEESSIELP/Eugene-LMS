@@ -1,112 +1,86 @@
-import { ArrowRight, ChevronRight, Play } from "lucide-react";
+import { ArrowRight, Play } from "lucide-react";
 import { Link } from "react-router";
 
 const Hero = () => {
   return (
     <section
       id="home"
-      className="relative pt-32 pb-20 overflow-hidden min-h-screen flex items-center"
+      className="relative pt-36 pb-20 bg-cream text-ink overflow-hidden"
     >
-      {/* Background Decor */}
-      <div className="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 bg-[#3ecf8e] opacity-5 dark:opacity-5 blur-[120px] rounded-full"></div>
-      <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-96 h-96 bg-[#3ecf8e] opacity-10 dark:opacity-10 blur-[120px] rounded-full"></div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           <div className="space-y-8">
-            <div className="inline-flex items-center space-x-2 bg-[#3ecf8e]/10 border border-[#3ecf8e]/20 px-3 py-1 rounded-full text-[#3ecf8e] text-sm font-medium">
+            <div className="inline-flex items-center gap-2 bg-brand-soft px-4 py-1.5 rounded-full text-brand-strong text-sm font-semibold">
               <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#3ecf8e] opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#3ecf8e]"></span>
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-brand"></span>
               </span>
-              <span>2025 Admissions are now open</span>
+              <span>2026 admissions are now open</span>
             </div>
 
-            <h1 className="text-5xl md:text-7xl font-extrabold text-gray-900 dark:text-white leading-tight">
-              Elevate Your <span className="text-[#3ecf8e]">Potential</span>,
-              Connect Your Future.
+            <h1 className="display-xl text-6xl md:text-8xl">
+              Learn boldly. <br />
+              Graduate <span className="text-brand">ready.</span>
             </h1>
 
-            <p className="text-xl text-gray-600 dark:text-gray-400 max-w-xl">
-              Edunexus is a premier technology-driven university designed for
-              the next generation of innovators, engineers, and digital artists.
+            <p className="text-xl text-ink/70 max-w-lg">
+              Veya is a technology-driven university built for the next
+              generation of innovators, engineers, and digital artists.
             </p>
 
-            <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
               <Link
                 to="/apply"
-                className="w-full sm:w-auto flex items-center justify-center space-x-2 bg-[#3ecf8e] text-black px-8 py-4 rounded-lg font-bold hover:bg-[#34b27b] transition-all transform hover:translate-y-[-2px] shadow-lg shadow-[#3ecf8e]/20"
+                className="inline-flex items-center justify-center gap-2 bg-brand text-white px-8 py-4 rounded-full font-semibold hover:bg-brand-strong transition-colors"
               >
-                <span>Start Application</span>
+                <span>Start application</span>
                 <ArrowRight className="w-5 h-5" />
               </Link>
               <a
                 href="#programs"
-                className="w-full sm:w-auto flex items-center justify-center space-x-2 bg-transparent text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 hover:border-[#3ecf8e] px-8 py-4 rounded-lg font-bold transition-all"
+                className="inline-flex items-center justify-center gap-2 border border-ink/20 text-ink px-8 py-4 rounded-full font-semibold hover:bg-ink hover:text-cream transition-colors"
               >
-                <Play className="w-4 h-4 text-[#3ecf8e] fill-[#3ecf8e]" />
-                <span>Explore Programs</span>
+                <Play className="w-4 h-4" />
+                <span>Explore programs</span>
               </a>
             </div>
 
-            <div className="flex items-center space-x-6 pt-4 border-t border-gray-200 dark:border-gray-800">
-              <div>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  12k+
-                </p>
-                <p className="text-sm text-gray-500">Active Students</p>
-              </div>
-              <div className="w-px h-8 bg-gray-200 dark:bg-gray-800"></div>
-              <div>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  98%
-                </p>
-                <p className="text-sm text-gray-500">Graduate Hire Rate</p>
-              </div>
-              <div className="w-px h-8 bg-gray-200 dark:bg-gray-800"></div>
-              <div>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  #1
-                </p>
-                <p className="text-sm text-gray-500">Tech Innovation</p>
-              </div>
+            <div className="flex items-center gap-10 pt-6 border-t border-ink/10">
+              {[
+                { value: "12k+", label: "Active students" },
+                { value: "98%", label: "Graduate hire rate" },
+                { value: "#1", label: "Tech innovation" },
+              ].map((stat) => (
+                <div key={stat.label}>
+                  <p className="display-xl text-4xl">{stat.value}</p>
+                  <p className="text-sm text-ink/60 mt-1">{stat.label}</p>
+                </div>
+              ))}
             </div>
           </div>
 
           <div className="relative">
-            <div className="relative rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 shadow-2xl group">
+            <div className="relative rounded-[2rem] overflow-hidden shadow-[0_24px_60px_-24px_rgba(16,16,20,0.45)]">
               <img
                 src="https://images.unsplash.com/photo-1562774053-701939374585?auto=format&fit=crop&q=80&w=1200"
-                alt="Edunexus Modern Campus"
-                className="w-full h-auto object-cover transform transition-transform duration-700 group-hover:scale-110"
+                alt="Veya campus"
+                className="w-full h-auto object-cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-gray-900/60 dark:from-[#121212] via-transparent to-transparent"></div>
-              <div className="absolute bottom-6 left-6 right-6 p-6 bg-white/90 dark:bg-[#1c1c1c]/90 backdrop-blur-md rounded-xl border border-gray-200 dark:border-gray-700">
-                <p className="text-sm font-medium text-[#3ecf8e] mb-1 uppercase tracking-wider">
-                  Upcoming Event
-                </p>
-                <p className="text-lg font-bold text-gray-900 dark:text-white">
-                  Quantum Computing Workshop
-                </p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Join us on April 15th for an exclusive look into the future.
-                </p>
-              </div>
             </div>
 
-            {/* Floating Element */}
-            <div className="absolute -top-6 -right-6 bg-white dark:bg-[#1c1c1c] p-4 rounded-xl border border-gray-200 dark:border-gray-800 shadow-xl hidden md:block animate-bounce-slow">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-full bg-[#3ecf8e] flex items-center justify-center">
-                  <ChevronRight className="text-black" />
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500">New Research</p>
-                  <p className="text-sm font-bold text-gray-900 dark:text-white">
-                    Carbon Neutral Campus
-                  </p>
-                </div>
-              </div>
+            <div className="absolute -bottom-8 -left-6 max-w-xs bg-white rounded-[1.5rem] p-6 shadow-[0_18px_40px_-20px_rgba(16,16,20,0.5)] hidden md:block">
+              <p className="text-xs font-semibold text-brand uppercase tracking-widest mb-2">
+                Upcoming event
+              </p>
+              <p className="text-lg font-semibold">Quantum Computing Workshop</p>
+              <p className="text-sm text-ink/60 mt-1">
+                April 15 — an exclusive look into the future.
+              </p>
+            </div>
+
+            <div className="absolute -top-6 -right-4 bg-brand text-white rounded-[1.5rem] px-6 py-5 hidden md:block">
+              <p className="display-xl text-3xl">250+</p>
+              <p className="text-sm opacity-80">Research labs</p>
             </div>
           </div>
         </div>

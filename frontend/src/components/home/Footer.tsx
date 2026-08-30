@@ -1,45 +1,33 @@
-import {
-  GraduationCap,
-  Github,
-  Twitter,
-  Linkedin,
-  ArrowUp,
-} from "lucide-react";
+import { Github, Twitter, Linkedin, ArrowUp } from "lucide-react";
+import Logo from "@/components/global/Logo";
 
 const Footer = () => {
   return (
-    <footer className="pt-20 pb-10 border-t border-gray-200 dark:border-gray-800 transition-colors duration-300">
+    <footer className="bg-ink text-cream pt-20 pb-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
           <div className="space-y-6">
-            <div className="flex items-center space-x-2">
-              <div className="bg-[#3ecf8e] p-1.5 rounded-lg">
-                <GraduationCap className="text-black w-6 h-6" />
-              </div>
-              <span className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white uppercase">
-                Edunexus
-              </span>
-            </div>
-            <p className="text-gray-600 dark:text-gray-500 leading-relaxed">
+            <Logo />
+            <p className="text-cream/60 leading-relaxed">
               Redefining higher education through technology, innovation, and
               global connectivity. Join the frontier.
             </p>
             <div className="flex space-x-4">
               <a
                 href="#"
-                className="w-10 h-10 rounded-full bg-white dark:bg-[#1c1c1c] border border-gray-200 dark:border-gray-800 flex items-center justify-center hover:bg-[#3ecf8e] hover:text-black transition-all text-gray-500 dark:text-gray-400 shadow-sm"
+                className="w-10 h-10 rounded-full bg-cream/10 flex items-center justify-center hover:bg-brand hover:text-white transition-colors text-cream/70"
               >
                 <Twitter className="w-5 h-5" />
               </a>
               <a
                 href="#"
-                className="w-10 h-10 rounded-full bg-white dark:bg-[#1c1c1c] border border-gray-200 dark:border-gray-800 flex items-center justify-center hover:bg-[#3ecf8e] hover:text-black transition-all text-gray-500 dark:text-gray-400 shadow-sm"
+                className="w-10 h-10 rounded-full bg-cream/10 flex items-center justify-center hover:bg-brand hover:text-white transition-colors text-cream/70"
               >
                 <Linkedin className="w-5 h-5" />
               </a>
               <a
                 href="#"
-                className="w-10 h-10 rounded-full bg-white dark:bg-[#1c1c1c] border border-gray-200 dark:border-gray-800 flex items-center justify-center hover:bg-[#3ecf8e] hover:text-black transition-all text-gray-500 dark:text-gray-400 shadow-sm"
+                className="w-10 h-10 rounded-full bg-cream/10 flex items-center justify-center hover:bg-brand hover:text-white transition-colors text-cream/70"
               >
                 <Github className="w-5 h-5" />
               </a>
@@ -47,14 +35,14 @@ const Footer = () => {
           </div>
 
           <div>
-            <h4 className="text-gray-900 dark:text-white font-bold mb-6 text-lg">
+            <h4 className="display-xl text-xl mb-6">
               Academics
             </h4>
             <ul className="space-y-4">
               <li>
                 <a
                   href="#"
-                  className="text-gray-600 dark:text-gray-500 hover:text-[#3ecf8e] transition-colors"
+                  className="text-cream/60 hover:text-cream transition-colors"
                 >
                   Undergraduate
                 </a>
@@ -62,7 +50,7 @@ const Footer = () => {
               <li>
                 <a
                   href="#"
-                  className="text-gray-600 dark:text-gray-500 hover:text-[#3ecf8e] transition-colors"
+                  className="text-cream/60 hover:text-cream transition-colors"
                 >
                   Postgraduate
                 </a>
@@ -70,7 +58,7 @@ const Footer = () => {
               <li>
                 <a
                   href="#"
-                  className="text-gray-600 dark:text-gray-500 hover:text-[#3ecf8e] transition-colors"
+                  className="text-cream/60 hover:text-cream transition-colors"
                 >
                   Executive Education
                 </a>
@@ -78,7 +66,7 @@ const Footer = () => {
               <li>
                 <a
                   href="#"
-                  className="text-gray-600 dark:text-gray-500 hover:text-[#3ecf8e] transition-colors"
+                  className="text-cream/60 hover:text-cream transition-colors"
                 >
                   Online Courses
                 </a>
@@ -86,7 +74,7 @@ const Footer = () => {
               <li>
                 <a
                   href="#"
-                  className="text-gray-600 dark:text-gray-500 hover:text-[#3ecf8e] transition-colors"
+                  className="text-cream/60 hover:text-cream transition-colors"
                 >
                   Scholarships
                 </a>
@@ -95,14 +83,14 @@ const Footer = () => {
           </div>
 
           <div>
-            <h4 className="text-gray-900 dark:text-white font-bold mb-6 text-lg">
+            <h4 className="display-xl text-xl mb-6">
               Resources
             </h4>
             <ul className="space-y-4">
               <li>
                 <a
                   href="#"
-                  className="text-gray-600 dark:text-gray-500 hover:text-[#3ecf8e] transition-colors"
+                  className="text-cream/60 hover:text-cream transition-colors"
                 >
                   Campus Map
                 </a>
@@ -110,7 +98,7 @@ const Footer = () => {
               <li>
                 <a
                   href="#"
-                  className="text-gray-600 dark:text-gray-500 hover:text-[#3ecf8e] transition-colors"
+                  className="text-cream/60 hover:text-cream transition-colors"
                 >
                   Library
                 </a>
@@ -118,7 +106,7 @@ const Footer = () => {
               <li>
                 <a
                   href="#"
-                  className="text-gray-600 dark:text-gray-500 hover:text-[#3ecf8e] transition-colors"
+                  className="text-cream/60 hover:text-cream transition-colors"
                 >
                   Research Portal
                 </a>
@@ -126,7 +114,7 @@ const Footer = () => {
               <li>
                 <a
                   href="#"
-                  className="text-gray-600 dark:text-gray-500 hover:text-[#3ecf8e] transition-colors"
+                  className="text-cream/60 hover:text-cream transition-colors"
                 >
                   Career Center
                 </a>
@@ -134,7 +122,7 @@ const Footer = () => {
               <li>
                 <a
                   href="#"
-                  className="text-gray-600 dark:text-gray-500 hover:text-[#3ecf8e] transition-colors"
+                  className="text-cream/60 hover:text-cream transition-colors"
                 >
                   Alumni Network
                 </a>
@@ -143,10 +131,10 @@ const Footer = () => {
           </div>
 
           <div>
-            <h4 className="text-gray-900 dark:text-white font-bold mb-6 text-lg">
+            <h4 className="display-xl text-xl mb-6">
               Newsletter
             </h4>
-            <p className="text-gray-600 dark:text-gray-500 mb-6">
+            <p className="text-cream/60 mb-6">
               Stay updated with the latest research breakthroughs and campus
               news.
             </p>
@@ -154,42 +142,42 @@ const Footer = () => {
               <input
                 type="email"
                 placeholder="Email address"
-                className="bg-white dark:bg-[#1c1c1c] border border-gray-200 dark:border-gray-800 rounded-l-lg px-4 py-3 text-gray-900 dark:text-white focus:outline-none w-full"
+                className="bg-cream/10 rounded-l-full px-5 py-3 text-cream placeholder:text-cream/40 focus:outline-none w-full"
               />
-              <button className="bg-[#3ecf8e] text-black px-4 py-3 rounded-r-lg font-bold hover:bg-[#34b27b] transition-colors">
+              <button className="bg-brand text-white px-6 py-3 rounded-r-full font-semibold hover:bg-brand-strong transition-colors">
                 Join
               </button>
             </div>
           </div>
         </div>
 
-        <div className="border-t border-gray-200 dark:border-gray-800 pt-8 flex flex-col md:flex-row items-center justify-between text-sm text-gray-500">
-          <p>© 2025 Edunexus University. All rights reserved.</p>
+        <div className="border-t border-cream/15 pt-8 flex flex-col md:flex-row items-center justify-between text-sm text-cream/50">
+          <p>© 2026 Veya University. All rights reserved.</p>
           <div className="flex space-x-6 mt-4 md:mt-0">
             <a
               href="#"
-              className="hover:text-gray-900 dark:hover:text-white transition-colors"
+              className="hover:text-cream transition-colors"
             >
               Privacy Policy
             </a>
             <a
               href="#"
-              className="hover:text-gray-900 dark:hover:text-white transition-colors"
+              className="hover:text-cream transition-colors"
             >
               Terms of Service
             </a>
             <a
               href="#"
-              className="hover:text-gray-900 dark:hover:text-white transition-colors"
+              className="hover:text-cream transition-colors"
             >
               Cookie Settings
             </a>
           </div>
           <button
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-            className="mt-6 md:mt-0 p-3 rounded-full bg-white dark:bg-[#1c1c1c] border border-gray-200 dark:border-gray-800 hover:border-[#3ecf8e] transition-all group shadow-sm"
+            className="mt-6 md:mt-0 p-3 rounded-full bg-cream/10 hover:bg-brand transition-colors group"
           >
-            <ArrowUp className="w-5 h-5 group-hover:text-[#3ecf8e] text-gray-400" />
+            <ArrowUp className="w-5 h-5 text-cream" />
           </button>
         </div>
       </div>

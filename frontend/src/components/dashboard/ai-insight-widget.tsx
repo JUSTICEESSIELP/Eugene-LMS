@@ -47,18 +47,18 @@ export function AiInsightWidget({ role }: Props) {
   };
 
   return (
-    <Card className="bg-linear-to-br from-green-50 to-white border dark:from-green-800 shadow-sm overflow-hidden relative">
+    <Card className="bg-brand-soft border-0 shadow-sm overflow-hidden relative">
       {/* Decorative Background Icon */}
-      <BrainCircuit className="absolute -right-6 -bottom-6 h-32 w-32 text-violet-100/50" />
+      <BrainCircuit className="absolute -right-6 -bottom-6 h-32 w-32 text-brand/10" />
 
       <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-md font-semibold text-violet-700 dark:text-violet-300 flex items-center gap-2">
+        <CardTitle className="text-md font-semibold text-brand-strong flex items-center gap-2">
           <Sparkles className="h-4 w-4" /> AI Academic Advisor
         </CardTitle>
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 w-8 text-violet-600 hover:text-violet-800 hover:bg-violet-100"
+          className="h-8 w-8 text-brand hover:text-brand-strong hover:bg-white/60"
           onClick={generateInsight}
           disabled={loading}
         >

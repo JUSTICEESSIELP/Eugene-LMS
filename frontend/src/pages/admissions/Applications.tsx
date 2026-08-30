@@ -105,7 +105,7 @@ const Applications = () => {
   return (
     <div className="p-4 space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Admissions</h1>
+        <h1 className="display-page text-3xl">Admissions</h1>
         <p className="text-muted-foreground">
           Applications submitted from the public “Apply Now” page.
         </p>

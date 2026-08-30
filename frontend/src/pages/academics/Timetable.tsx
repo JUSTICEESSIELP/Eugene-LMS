@@ -79,7 +79,7 @@ const Timetable = () => {
   return (
     <div className="p-4 space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">
+        <h1 className="display-page text-3xl">
           Timetable Management
         </h1>
         <p className="text-muted-foreground">

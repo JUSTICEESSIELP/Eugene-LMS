@@ -1,4 +1,11 @@
-import { Cpu, Brain, Database, Palette, ShieldCheck } from "lucide-react";
+import {
+  ArrowRight,
+  Brain,
+  Cpu,
+  Database,
+  Palette,
+  ShieldCheck,
+} from "lucide-react";
 
 const programs = [
   {
@@ -39,14 +46,12 @@ const Programs = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
           <div className="space-y-4">
-            <h2 className="text-[#3ecf8e] font-bold tracking-widest uppercase text-sm">
-              Academic Programs
+            <h2 className="text-brand font-semibold tracking-widest uppercase text-sm">
+              Academic programs
             </h2>
-            <h3 className="text-4xl font-bold text-gray-900 dark:text-white">
-              Find Your Domain
-            </h3>
+            <h3 className="display-xl text-5xl md:text-6xl">Find your domain</h3>
           </div>
-          <p className="text-gray-600 dark:text-gray-400 max-w-md">
+          <p className="text-ink/60 max-w-md">
             Our curriculum is designed in partnership with industry giants to
             ensure our graduates are day-one ready.
           </p>
@@ -56,23 +61,18 @@ const Programs = () => {
           {programs.map((program, idx) => (
             <div
               key={idx}
-              className="group relative bg-gray-50 dark:bg-[#1c1c1c] border border-gray-200 dark:border-gray-800 p-8 rounded-2xl hover:border-[#3ecf8e]/50 transition-all duration-300 shadow-sm hover:shadow-xl"
+              className="group relative bg-white p-8 rounded-[2rem] transition-shadow duration-300 shadow-[0_10px_30px_-26px_rgba(16,16,20,0.8)] hover:shadow-[0_24px_55px_-30px_rgba(16,16,20,0.8)]"
             >
-              <div className="absolute top-0 right-0 p-4 opacity-10 dark:opacity-5 transition-opacity group-hover:opacity-20 dark:group-hover:opacity-10">
-                <program.icon
-                  size={80}
-                  className="text-gray-300 dark:text-white"
-                />
+              <div className="absolute top-0 right-0 p-4 opacity-[0.06] transition-opacity group-hover:opacity-10">
+                <program.icon size={80} className="text-ink" />
               </div>
 
-              <div className="bg-white dark:bg-[#1c1c1c] w-14 h-14 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-sm border border-gray-100 dark:border-gray-700">
-                <program.icon className="text-[#3ecf8e] w-7 h-7" />
+              <div className="bg-brand-soft w-14 h-14 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                <program.icon className="text-brand-strong w-7 h-7" />
               </div>
 
-              <h4 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
-                {program.title}
-              </h4>
-              <p className="text-gray-600 dark:text-gray-400 mb-6 leading-relaxed">
+              <h4 className="display-xl text-3xl mb-3">{program.title}</h4>
+              <p className="text-ink/60 mb-6 leading-relaxed">
                 {program.desc}
               </p>
 
@@ -80,15 +80,15 @@ const Programs = () => {
                 {program.tags.map((tag, tIdx) => (
                   <span
                     key={tIdx}
-                    className="px-3 py-1 bg-white dark:bg-[#1c1c1c] border border-gray-200 dark:border-gray-800 rounded-full text-xs font-medium text-gray-500 dark:text-gray-400"
+                    className="px-3 py-1 bg-cream rounded-full text-xs font-medium text-ink/60"
                   >
                     {tag}
                   </span>
                 ))}
               </div>
 
-              <button className="mt-8 flex items-center text-[#3ecf8e] font-bold group-hover:translate-x-2 transition-transform">
-                Learn More <Cpu className="ml-2 w-4 h-4" />
+              <button className="mt-8 flex items-center text-brand font-semibold group-hover:translate-x-2 transition-transform">
+                Learn more <ArrowRight className="ml-2 w-4 h-4" />
               </button>
             </div>
           ))}

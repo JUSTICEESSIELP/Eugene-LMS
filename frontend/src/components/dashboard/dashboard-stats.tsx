@@ -26,7 +26,7 @@ export function DashboardStats({ role, data }: StatsProps) {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{data.totalStudents || 0}</div>
+            <div className="display-page text-2xl">{data.totalStudents || 0}</div>
             <p className="text-xs text-muted-foreground">+12% from last year</p>
           </CardContent>
         </Card>
@@ -38,7 +38,7 @@ export function DashboardStats({ role, data }: StatsProps) {
             <GraduationCap className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{data.totalTeachers || 0}</div>
+            <div className="display-page text-2xl">{data.totalTeachers || 0}</div>
             <p className="text-xs text-muted-foreground">Active Staff</p>
           </CardContent>
         </Card>
@@ -50,7 +50,7 @@ export function DashboardStats({ role, data }: StatsProps) {
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="display-page text-2xl">
               {data.avgAttendance || "0%"}
             </div>
             <p className="text-xs text-muted-foreground">Today's metrics</p>
@@ -62,7 +62,7 @@ export function DashboardStats({ role, data }: StatsProps) {
             <BookOpen className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{data.activeExams || 0}</div>
+            <div className="display-page text-2xl">{data.activeExams || 0}</div>
             <p className="text-xs text-muted-foreground">Currently ongoing</p>
           </CardContent>
         </Card>
@@ -80,7 +80,7 @@ export function DashboardStats({ role, data }: StatsProps) {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{data.myClassesCount || 0}</div>
+            <div className="display-page text-2xl">{data.myClassesCount || 0}</div>
             <p className="text-xs text-muted-foreground">Assigned sections</p>
           </CardContent>
         </Card>
@@ -92,7 +92,7 @@ export function DashboardStats({ role, data }: StatsProps) {
             <AlertCircle className="h-4 w-4 text-orange-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{data.pendingGrading || 0}</div>
+            <div className="display-page text-2xl">{data.pendingGrading || 0}</div>
             <p className="text-xs text-muted-foreground">
               Submissions to review
             </p>
@@ -125,7 +125,7 @@ export function DashboardStats({ role, data }: StatsProps) {
           <Clock className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{data.myAttendance || "0%"}</div>
+          <div className="display-page text-2xl">{data.myAttendance || "0%"}</div>
           <p className="text-xs text-muted-foreground">This semester</p>
         </CardContent>
       </Card>
@@ -135,7 +135,7 @@ export function DashboardStats({ role, data }: StatsProps) {
           <BookOpen className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">
+          <div className="display-page text-2xl">
             {data.pendingAssignments || 0}
           </div>
           <p className="text-xs text-muted-foreground">Due this week</p>

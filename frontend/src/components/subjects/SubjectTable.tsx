@@ -84,7 +84,7 @@ export function SubjectTable({
                 <TableCell>{item.teacher?.length}</TableCell>
                 <TableCell>
                   {item.isActive ? (
-                    <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
+                    <Badge className="bg-brand-soft text-brand-strong hover:bg-brand-soft">
                       Active
                     </Badge>
                   ) : (

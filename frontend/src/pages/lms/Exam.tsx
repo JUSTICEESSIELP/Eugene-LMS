@@ -162,7 +162,7 @@ const Exam = () => {
       {/* Header Section */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">{exam.title}</h1>
+          <h1 className="display-page text-3xl">{exam.title}</h1>
           <Badge variant={exam.isActive ? "default" : "secondary"}>
             {exam.isActive ? "Active" : "Draft"}
           </Badge>
@@ -212,7 +212,7 @@ const Exam = () => {
                 <Award className="h-8 w-8 text-yellow-600" />
               </div>
               <div className="text-center">
-                <h1 className="text-3xl font-bold">Exam Results</h1>
+                <h1 className="display-page text-3xl">Exam Results</h1>
                 <p className="text-muted-foreground">You scored</p>
               </div>
               <div className="flex items-baseline gap-2">

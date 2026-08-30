@@ -65,7 +65,7 @@ const Apply = () => {
       <div className="min-h-svh flex items-center justify-center p-6">
         <div className="max-w-md text-center space-y-6">
           <CheckCircle2 className="w-16 h-16 text-brand mx-auto" />
-          <h1 className="text-3xl font-bold">Application received</h1>
+          <h1 className="display-page text-3xl">Application received</h1>
           <p className="text-muted-foreground">
             Thanks for applying to Veya. Our admissions team will review your
             application and get back to you by email.

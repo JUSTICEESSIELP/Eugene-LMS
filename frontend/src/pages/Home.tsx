@@ -7,7 +7,7 @@ import Footer from "@/components/home/Footer";
 
 const Home = () => {
   return (
-    <div className="bg-cream text-ink">
+    <div className="surface-light bg-cream text-ink">
       <Navbar />
       <main className="">
         <Hero />

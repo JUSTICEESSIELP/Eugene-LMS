@@ -108,7 +108,7 @@ const AcademicYear = () => {
       {/* header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Academic Years</h1>
+          <h1 className="display-page text-3xl">Academic Years</h1>
           <p className="text-muted-foreground">Manage school sessions.</p>
         </div>
         <div className="flex gap-3">

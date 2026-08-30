@@ -76,7 +76,7 @@ const AcademicYearTable = ({
                 <TableCell>{format(new Date(year.toYear), "PPP")}</TableCell>
                 <TableCell>
                   {year.isCurrent ? (
-                    <Badge className="bg-green-600 hover:bg-green-700">
+                    <Badge className="bg-brand hover:bg-brand-strong">
                       Active
                     </Badge>
                   ) : (

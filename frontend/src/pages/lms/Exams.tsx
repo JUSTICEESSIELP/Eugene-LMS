@@ -57,7 +57,7 @@ const Exams = () => {
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Quizzes & Exams</h1>
+          <h1 className="display-page text-3xl">Quizzes & Exams</h1>
           <p className="text-muted-foreground">
             Manage assessments and view results.
           </p>

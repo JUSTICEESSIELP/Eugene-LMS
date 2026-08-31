@@ -1,0 +1,516 @@
+<title>Veya Gap Register</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700&family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --paper:    #faf9f7;
+    --surface:  #ffffff;
+    --sunken:   #f2f0ed;
+    --ink:      #16161c;
+    --muted:    #6a6560;
+    --rule:     #e4e0da;
+    --rule-soft:#efece7;
+    --accent:   #5769e7;
+
+    --crit:      #b02a1c;
+    --crit-soft: #fbeae7;
+    --crit-rule: #f0c8c1;
+    --high:      #8a5510;
+    --high-soft: #fbf2e2;
+    --high-rule: #e9d5ae;
+    --med:       #3f5a6b;
+    --med-soft:  #eaf0f4;
+    --med-rule:  #cfdde5;
+    --done:      #1f7a4d;
+    --done-soft: #e4f4ec;
+    --done-rule: #bfe3d1;
+
+    --shadow: 0 1px 2px rgba(22,22,28,.04), 0 8px 22px -16px rgba(22,22,28,.35);
+
+    --display: Archivo, "Helvetica Neue", Arial, sans-serif;
+    --body:    Outfit, ui-sans-serif, system-ui, -apple-system, sans-serif;
+    --mono:    "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+    color-scheme: light;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:    #131317;
+      --surface:  #1b1b21;
+      --sunken:   #222229;
+      --ink:      #edeae5;
+      --muted:    #9b958d;
+      --rule:     #2e2e37;
+      --rule-soft:#26262d;
+      --accent:   #8b96f0;
+
+      --crit:      #f0918030;
+      --crit:      #f09180;
+      --crit-soft: #2e1613;
+      --crit-rule: #4f2921;
+      --high:      #e0b878;
+      --high-soft: #2b2214;
+      --high-rule: #4a3b20;
+      --med:       #9dc0d4;
+      --med-soft:  #182229;
+      --med-rule:  #2c3d48;
+      --done:      #6ecfa0;
+      --done-soft: #14291f;
+      --done-rule: #26543c;
+
+      --shadow: 0 1px 2px rgba(0,0,0,.5), 0 8px 22px -16px rgba(0,0,0,.8);
+      color-scheme: dark;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --paper:    #131317;
+    --surface:  #1b1b21;
+    --sunken:   #222229;
+    --ink:      #edeae5;
+    --muted:    #9b958d;
+    --rule:     #2e2e37;
+    --rule-soft:#26262d;
+    --accent:   #8b96f0;
+    --crit:      #f09180;
+    --crit-soft: #2e1613;
+    --crit-rule: #4f2921;
+    --high:      #e0b878;
+    --high-soft: #2b2214;
+    --high-rule: #4a3b20;
+    --med:       #9dc0d4;
+    --med-soft:  #182229;
+    --med-rule:  #2c3d48;
+    --done:      #6ecfa0;
+    --done-soft: #14291f;
+    --done-rule: #26543c;
+    --shadow: 0 1px 2px rgba(0,0,0,.5), 0 8px 22px -16px rgba(0,0,0,.8);
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 58rem; margin: 0 auto; padding: 0 1.5rem 6rem; }
+
+  header { padding: 3.5rem 0 0; }
+  .kicker {
+    font-family: var(--mono);
+    font-size: .7rem; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--muted); margin: 0 0 .9rem;
+  }
+  h1 {
+    font-family: var(--display); font-weight: 700;
+    font-size: clamp(2.2rem, 5.5vw, 3.1rem);
+    line-height: 1.05; letter-spacing: -.02em;
+    margin: 0 0 .9rem; text-wrap: balance;
+  }
+  .lede { font-size: 1.08rem; color: var(--muted); max-width: 52ch; margin: 0; }
+
+  /* Severity summary strip */
+  .tally {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+    gap: .5rem; margin: 2.25rem 0 0;
+  }
+  .tally div {
+    background: var(--surface); border: 1px solid var(--rule);
+    border-left: 4px solid var(--muted);
+    border-radius: .4rem; padding: .7rem .85rem;
+  }
+  .tally b {
+    display: block; font-family: var(--display); font-weight: 700;
+    font-size: 1.9rem; line-height: 1; font-variant-numeric: tabular-nums;
+  }
+  .tally span { font-size: .78rem; color: var(--muted); }
+  .tally .t-crit { border-left-color: var(--crit); } .t-crit b { color: var(--crit); }
+  .tally .t-high { border-left-color: var(--high); } .t-high b { color: var(--high); }
+  .tally .t-med  { border-left-color: var(--med);  } .t-med  b { color: var(--med); }
+  .tally .t-done { border-left-color: var(--done); } .t-done b { color: var(--done); }
+
+  section { padding-top: 3rem; }
+  h2 {
+    font-family: var(--display); font-weight: 700;
+    font-size: 1.35rem; letter-spacing: -.01em;
+    margin: 0 0 .3rem; display: flex; align-items: center; gap: .6rem;
+  }
+  h2 .dot { width: .7rem; height: .7rem; border-radius: 50%; flex: 0 0 auto; }
+  .sec-note { color: var(--muted); margin: 0 0 1.5rem; max-width: 60ch; font-size: .95rem; }
+
+  .gap {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: .55rem;
+    padding: 1rem 1.15rem;
+    margin-bottom: .6rem;
+    box-shadow: var(--shadow);
+  }
+  .gap-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: .5rem .75rem; }
+  .id {
+    font-family: var(--mono); font-size: .72rem; font-weight: 500;
+    color: var(--muted); background: var(--sunken);
+    border-radius: .25rem; padding: .1rem .4rem;
+  }
+  .gap-head h3 {
+    font-family: var(--body); font-weight: 600; font-size: 1rem;
+    margin: 0; flex: 1 1 18rem; letter-spacing: -.005em;
+  }
+  .effort {
+    font-family: var(--mono); font-size: .68rem;
+    letter-spacing: .06em; text-transform: uppercase;
+    color: var(--muted); white-space: nowrap;
+  }
+  .gap dl { margin: .7rem 0 0; display: grid; gap: .45rem; }
+  .gap dt {
+    font-family: var(--mono); font-size: .64rem;
+    letter-spacing: .12em; text-transform: uppercase; color: var(--muted);
+  }
+  .gap dd { margin: 0; font-size: .9rem; }
+
+  .tag {
+    display: inline-block; font-family: var(--mono);
+    font-size: .66rem; letter-spacing: .05em; text-transform: uppercase;
+    padding: .08rem .4rem; border-radius: .25rem; border: 1px solid;
+    white-space: nowrap;
+  }
+  .tag.fixing { color: var(--done); background: var(--done-soft); border-color: var(--done-rule); }
+  .tag.verified { color: var(--med); background: var(--med-soft); border-color: var(--med-rule); }
+
+  code {
+    font-family: var(--mono); font-size: .84em;
+    background: var(--sunken); border-radius: .25rem; padding: .04rem .3rem;
+  }
+
+  .note {
+    border-left: 3px solid var(--accent);
+    background: var(--sunken);
+    border-radius: 0 .4rem .4rem 0;
+    padding: .8rem 1rem; margin-top: 1.25rem; font-size: .9rem;
+  }
+  .note b { color: var(--accent); }
+
+  footer {
+    margin-top: 3.5rem; padding-top: 1.25rem;
+    border-top: 1px solid var(--rule);
+    font-size: .84rem; color: var(--muted);
+  }
+
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+
+  <header>
+    <p class="kicker">Veya LMS &middot; engineering audit</p>
+    <h1>Gap Register</h1>
+    <p class="lede">Twenty-two gaps found by auditing categories rather than clicking around &mdash; authorization, data integrity, dead ends, and features advertised but never built.</p>
+
+    <div class="tally">
+      <div class="t-crit"><b>4</b><span>Correctness &amp; security</span></div>
+      <div class="t-high"><b>6</b><span>Dead ends</span></div>
+      <div class="t-med"><b>12</b><span>Missing &amp; incomplete</span></div>
+      <div class="t-done"><b>2</b><span>Being fixed now</span></div>
+    </div>
+  </header>
+
+  <!-- ================= CRITICAL ================= -->
+  <section>
+    <h2><span class="dot" style="background:var(--crit)"></span>Correctness &amp; security</h2>
+    <p class="sec-note">Each one verified in the code or by signing in as the affected role &mdash; not inferred.</p>
+
+    <article class="gap">
+      <div class="gap-head">
+        <span class="id">G-01</span>
+        <h3>Exam submission skips every check that <code>GET</code> enforces</h3>
+        <span class="effort">~1 hour</span>
+      </div>
+      <dl>
+        <div><dt>Evidence</dt><dd><code>POST /api/exams/:id/submit</code> calls <code>gradeSubmission()</code>, which looks up the exam by id and grades it. There is no check on the student's class, on <code>isActive</code>, or on <code>dueDate</code> &mdash; while <code>GET /api/exams/:id</code> correctly 403s a student from another class. <span class="tag verified">code-read</span></dd></div>
+        <div><dt>Impact</dt><dd>A student can submit against any exam id: another class's paper, an unpublished draft, or one long past due, and it records a score. They cannot read the questions (the GET is guarded), so this is data pollution rather than cheating &mdash; but the inconsistency makes it a bug, not a decision.</dd></div>
+        <div><dt>Fix</dt><dd>Move the class / active / due-date guard into <code>gradeSubmission</code> so both paths share it.</dd></div>
+      </dl>
+    </article>
+
+    <article class="gap">
+      <div class="gap-head">
+        <span class="id">G-02</span>
+        <h3>The router never checks a role</h3>
+        <span class="effort">~30 min</span>
+      </div>
+      <dl>
+        <div><dt>Evidence</dt><dd>Signed in as a <em>parent</em> &mdash; the lowest-privilege role &mdash; and opened <code>/admissions</code>, <code>/classes</code>, <code>/subjects</code>, <code>/users/admins</code> and <code>/settings/academic-years</code> by typing the URL. Every admin screen rendered in full, buttons and forms included. <span class="tag verified">tested live</span></dd></div>
+        <div><dt>Impact</dt><dd><b>No data leaks</b> &mdash; every table came back empty because the API returns 403, which is the boundary that matters. But the UI offers controls that cannot work, to people who should not see them.</dd></div>
+        <div><dt>Fix</dt><dd>A role guard on the private route branch, the same shape as the sidebar filter that already exists.</dd></div>
+      </dl>
+    </article>
+
+    <article class="gap">
+      <div class="gap-head">
+        <span class="id">G-03</span>
+        <h3>No password policy on the server</h3>
+        <span class="effort">~20 min</span>
+      </div>
+      <dl>
+        <div><dt>Evidence</dt><dd>The React form requires 6&ndash;8 characters, but <code>POST /api/users/register</code> validates only that <code>password</code> is present. Anything that talks to the API directly bypasses the rule. <span class="tag verified">code-read</span></dd></div>
+        <div><dt>Impact</dt><dd>Single-character passwords are accepted on a real account. Client-side validation is a convenience, never a control.</dd></div>
+        <div><dt>Fix</dt><dd>Enforce a minimum length server-side in register and update, returning 400.</dd></div>
+      </dl>
+    </article>
+
+    <article class="gap">
+      <div class="gap-head">
+        <span class="id">G-04</span>
+        <h3>The one public write endpoint is unthrottled</h3>
+        <span class="effort">~30 min</span>
+      </div>
+      <dl>
+        <div><dt>Evidence</dt><dd>No rate limiting anywhere in the Worker. <code>POST /api/applications</code> needs no session. <span class="tag verified">code-read</span></dd></div>
+        <div><dt>Impact</dt><dd>Anyone can flood the admissions table. The duplicate-pending guard only stops the same email applying twice to the same programme &mdash; varying either walks straight past it. Once acceptance emails go out, this becomes a way to make Veya send mail.</dd></div>
+        <div><dt>Fix</dt><dd>A Cloudflare Rate Limit binding applied before the insert &mdash; the same pattern the Workplace Files project already uses.</dd></div>
+      </dl>
+    </article>
+  </section>
+
+  <!-- ================= DEAD ENDS ================= -->
+  <section>
+    <h2><span class="dot" style="background:var(--high)"></span>Dead ends</h2>
+    <p class="sec-note">Flows that start, look like they worked, and then stop. These are what make the app feel broken even where nothing errors.</p>
+
+    <article class="gap">
+      <div class="gap-head">
+        <span class="id">G-05</span>
+        <h3>Accepting an application does nothing</h3>
+        <span class="effort"><span class="tag fixing">in progress</span></span>
+      </div>
+      <dl>
+        <div><dt>Evidence</dt><dd>Accepted a real application on production and re-queried: status changed to <code>accepted</code>, an audit line was written, and the user count stayed at 2. No account, no email. <span class="tag verified">tested live</span></dd></div>
+        <div><dt>Impact</dt><dd>The applicant cannot log in and never learns the outcome. An admin must retype every accepted person into the student form by hand.</dd></div>
+      </dl>
+    </article>
+
+    <article class="gap">
+      <div class="gap-head">
+        <span class="id">G-06</span>
+        <h3>Applying produces no signal at all</h3>
+        <span class="effort"><span class="tag fixing">in progress</span></span>
+      </div>
+      <dl>
+        <div><dt>Evidence</dt><dd>The form writes a row and shows a confirmation screen. No email is sent, and there is no way for an applicant to check status later.</dd></div>
+        <div><dt>Impact</dt><dd>From the applicant's side the submission vanishes. This is the single most common &ldquo;is it broken?&rdquo; moment in the product.</dd></div>
+      </dl>
+    </article>
+
+    <article class="gap">
+      <div class="gap-head">
+        <span class="id">G-07</span>
+        <h3>Forgetting a password locks you out permanently</h3>
+        <span class="effort">~3 hours</span>
+      </div>
+      <dl>
+        <div><dt>Evidence</dt><dd>No reset, recovery or forgot-password route exists in either the SPA or the API. <span class="tag verified">code-read</span></dd></div>
+        <div><dt>Impact</dt><dd>The only recovery is an admin editing the record and telling the person their new password out of band. For a student body of any size this becomes the admin's whole job.</dd></div>
+        <div><dt>Fix</dt><dd>Now unblocked &mdash; once Resend is wired, a single-use expiring reset token is straightforward.</dd></div>
+      </dl>
+    </article>
+
+    <article class="gap">
+      <div class="gap-head">
+        <span class="id">G-08</span>
+        <h3>The parent role is a shell</h3>
+        <span class="effort">~1 day</span>
+      </div>
+      <dl>
+        <div><dt>Evidence</dt><dd>Created a parent and signed in. Landed on the student dashboard showing <code>0%</code>, <code>0</code>, <code>None</code>; the menu offered Dashboard, Timetable and Attendance; exams, classes and subjects all returned 403. <span class="tag verified">tested live</span></dd></div>
+        <div><dt>Impact</dt><dd>An admin can create an account that leads nowhere. There is no parent&rarr;child link on the user record, so there is nothing to show even if a page existed.</dd></div>
+        <div><dt>Fix</dt><dd>Hide the role from the creation dropdown today (minutes); build it properly later.</dd></div>
+      </dl>
+    </article>
+
+    <article class="gap">
+      <div class="gap-head">
+        <span class="id">G-09</span>
+        <h3>Teachers cannot see results</h3>
+        <span class="effort">~4 hours</span>
+      </div>
+      <dl>
+        <div><dt>Evidence</dt><dd>Submissions are graded and stored, and the API can return any student's result, but no screen lists them. The teacher dashboard shows a &ldquo;pending grading&rdquo; count that leads nowhere.</dd></div>
+        <div><dt>Impact</dt><dd>The assessment loop never closes. Work is marked and then invisible.</dd></div>
+      </dl>
+    </article>
+
+    <article class="gap">
+      <div class="gap-head">
+        <span class="id">G-10</span>
+        <h3>Exam duration is decorative</h3>
+        <span class="effort">~2 hours</span>
+      </div>
+      <dl>
+        <div><dt>Evidence</dt><dd><code>{exam.duration} Minutes</code> is rendered on the exam page. Nothing starts a timer, and the submit endpoint does not check elapsed time. <span class="tag verified">code-read</span></dd></div>
+        <div><dt>Impact</dt><dd>A timed assessment that is not timed. Displaying the limit implies enforcement that does not exist.</dd></div>
+      </dl>
+    </article>
+  </section>
+
+  <!-- ================= MISSING ================= -->
+  <section>
+    <h2><span class="dot" style="background:var(--med)"></span>Missing &amp; incomplete</h2>
+    <p class="sec-note">Advertised in the interface, absent from the codebase &mdash; plus the data-integrity work that was never done.</p>
+
+    <article class="gap">
+      <div class="gap-head">
+        <span class="id">G-11</span>
+        <h3>Attendance does not exist, but is reported anyway</h3>
+        <span class="effort">~2 days</span>
+      </div>
+      <dl>
+        <div><dt>Evidence</dt><dd>No attendance table, model or endpoint. The dashboards return the string literals <code>"94.5%"</code> and <code>"98%"</code>, both marked as placeholders in the source. <span class="tag verified">code-read</span></dd></div>
+        <div><dt>Impact</dt><dd>The app shows a confident, invented statistic to admins and students. This is the worst of the missing features, because it does not look missing.</dd></div>
+      </dl>
+    </article>
+
+    <article class="gap">
+      <div class="gap-head">
+        <span class="id">G-12</span>
+        <h3>Deleting a record leaves dangling references everywhere</h3>
+        <span class="effort">~4 hours</span>
+      </div>
+      <dl>
+        <div><dt>Evidence</dt><dd>Only exam deletion cascades (to submissions). Deleting a subject leaves its id inside <code>classes.subjects</code>, <code>users.teacherSubject</code> and <code>exams.subject</code>; deleting a teacher leaves them in <code>subjects.teacher</code>, <code>classes.classTeacher</code> and saved timetables; deleting a class strands students' <code>studentClass</code>. <span class="tag verified">code-read</span></dd></div>
+        <div><dt>Impact</dt><dd>Relations are JSON columns with no foreign keys, so nothing catches it. Populated lookups quietly fall back to raw ids and the UI renders a hex string where a name should be.</dd></div>
+      </dl>
+    </article>
+
+    <article class="gap">
+      <div class="gap-head">
+        <span class="id">G-13</span>
+        <h3>Changing a user's email to one already taken returns a 500</h3>
+        <span class="effort">~15 min</span>
+      </div>
+      <dl>
+        <div><dt>Evidence</dt><dd>Register checks for a duplicate; update does not. The unique index on <code>lower(email)</code> then throws, surfacing as a server error rather than a clear message. <span class="tag verified">code-read</span></dd></div>
+      </dl>
+    </article>
+
+    <article class="gap">
+      <div class="gap-head">
+        <span class="id">G-14</span>
+        <h3>Seven menu items lead to &ldquo;coming soon&rdquo;</h3>
+        <span class="effort">varies</span>
+      </div>
+      <dl>
+        <div><dt>Evidence</dt><dd>Assignments, Study Materials, Fee Collection, Expenses, Salary, School Settings, Roles &amp; Permissions. All are advertised in the sidebar with no page behind them. They now degrade gracefully rather than erroring, but they still promise features that do not exist.</dd></div>
+        <div><dt>Fix</dt><dd>Hide them until built &mdash; a menu is a promise.</dd></div>
+      </dl>
+    </article>
+
+    <article class="gap">
+      <div class="gap-head">
+        <span class="id">G-15</span>
+        <h3>Activities Log shows the dashboard</h3>
+        <span class="effort">~2 hours</span>
+      </div>
+      <dl>
+        <div><dt>Evidence</dt><dd><code>/activities-log</code> is wired to the <code>Dashboard</code> component in the router. <span class="tag verified">code-read</span></dd></div>
+        <div><dt>Impact</dt><dd>Every write is already logged and the API paginates it &mdash; only the screen is missing. The audit trail exists and nobody can read it.</dd></div>
+      </dl>
+    </article>
+
+    <article class="gap">
+      <div class="gap-head">
+        <span class="id">G-16</span>
+        <h3>Logging out does not invalidate the token</h3>
+        <span class="effort">~3 hours</span>
+      </div>
+      <dl>
+        <div><dt>Evidence</dt><dd>Logout clears the cookie. The JWT itself stays valid for its full 30 days; there is no revocation list. <span class="tag verified">code-read</span></dd></div>
+        <div><dt>Impact</dt><dd>A copied token keeps working after sign-out, and deactivating a user does not end their current session. Acceptable for many apps &mdash; worth knowing you have accepted it.</dd></div>
+      </dl>
+    </article>
+
+    <article class="gap">
+      <div class="gap-head">
+        <span class="id">G-17</span>
+        <h3>The exam list is unpaginated</h3>
+        <span class="effort">~30 min</span>
+      </div>
+      <dl>
+        <div><dt>Evidence</dt><dd><code>GET /api/exams</code> has no <code>LIMIT</code>, unlike every other list endpoint. It returns every exam a teacher has ever created, questions included.</dd></div>
+      </dl>
+    </article>
+
+    <article class="gap">
+      <div class="gap-head">
+        <span class="id">G-18</span>
+        <h3>The footer is 16 placeholder links and a dead button</h3>
+        <span class="effort">~1 hour</span>
+      </div>
+      <dl>
+        <div><dt>Evidence</dt><dd>16 anchors still point at <code>href="#"</code>, including Privacy Policy and Terms of Service. The newsletter <b>Join</b> button has no handler and there is no subscriber storage. <span class="tag verified">tested live</span></dd></div>
+        <div><dt>Impact</dt><dd>Privacy Policy and Terms are the two a real institution cannot leave dangling.</dd></div>
+      </dl>
+    </article>
+
+    <article class="gap">
+      <div class="gap-head">
+        <span class="id">G-19</span>
+        <h3>No self-service account creation of any kind</h3>
+        <span class="effort">&mdash;</span>
+      </div>
+      <dl>
+        <div><dt>Evidence</dt><dd>No sign-up route, and no invite flow. Every account is typed in by an admin, and the very first admin must be seeded from the command line because registration itself requires an admin.</dd></div>
+        <div><dt>Impact</dt><dd>Deliberate for an LMS, but it means onboarding does not scale past a handful of people. G-05 is the first step toward fixing it.</dd></div>
+      </dl>
+    </article>
+
+    <article class="gap">
+      <div class="gap-head">
+        <span class="id">G-20</span>
+        <h3>Teacher dashboard &ldquo;next class&rdquo; is hardcoded</h3>
+        <span class="effort">~2 hours</span>
+      </div>
+      <dl>
+        <div><dt>Evidence</dt><dd>The API returns the literal <code>"Mathematics - Grade 10"</code> at <code>"10:00 AM"</code> for every teacher. <span class="tag verified">code-read</span></dd></div>
+        <div><dt>Impact</dt><dd>Timetable data exists to compute this properly; nobody wired it.</dd></div>
+      </dl>
+    </article>
+
+    <article class="gap">
+      <div class="gap-head">
+        <span class="id">G-21</span>
+        <h3>Accepted applicants have no class</h3>
+        <span class="effort">~1 hour</span>
+      </div>
+      <dl>
+        <div><dt>Evidence</dt><dd>An application records a <em>programme</em> (&ldquo;Data Architecture&rdquo;), but classes are named things like &ldquo;Grade 10&rdquo;. Nothing maps one to the other.</dd></div>
+        <div><dt>Impact</dt><dd>Even once acceptance creates an account, that student sees no exams until an admin assigns a class by hand &mdash; because exam visibility is scoped entirely by class.</dd></div>
+      </dl>
+    </article>
+
+    <article class="gap">
+      <div class="gap-head">
+        <span class="id">G-22</span>
+        <h3>The public landing page calls authenticated endpoints</h3>
+        <span class="effort">~15 min</span>
+      </div>
+      <dl>
+        <div><dt>Evidence</dt><dd><code>AuthProvider</code> requests <code>/users/profile</code> and <code>/academic-years/current</code> on every page load, including for signed-out visitors, producing about a dozen 401s in the console on the landing page. <span class="tag verified">tested live</span></dd></div>
+        <div><dt>Impact</dt><dd>Harmless &mdash; the errors are caught &mdash; but it is noise that hides real errors and wastes requests on the busiest page.</dd></div>
+      </dl>
+    </article>
+  </section>
+
+  <div class="note">
+    <b>How this list was built.</b> By auditing categories rather than clicking around: every navigation target against every defined route, every button for a handler, every delete for cascade behaviour, every role gate in the sidebar against the API, and every dashboard number against a real query. Findings marked <span class="tag verified">tested live</span> were reproduced against the deployed app; the rest are read directly from the source. Earlier passes that only spot-checked missed five dead buttons and a whole role's experience &mdash; hence the change in method.
+  </div>
+
+  <footer>
+    <p>Audited against the deployed build at <code>eugene-lms.workplacefiles.com</code>. G-05 and G-06 are being implemented now with Resend; the rest are open.</p>
+  </footer>
+</div>

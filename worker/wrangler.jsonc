@@ -36,7 +36,10 @@
 
   "observability": { "enabled": true },
 
+  // RESEND_API_KEY is a secret (`wrangler secret put`), not a var. The from
+  // address must sit on a domain verified in Resend.
   "vars": {
-    "GEMINI_MODEL": "gemini-2.5-flash"
+    "GEMINI_MODEL": "gemini-2.5-flash",
+    "RESEND_FROM": "Veya <noreply@mail.offgridlabs.org>"
   }
 }

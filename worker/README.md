@@ -108,6 +108,47 @@ Do **not** re-run `schema.sql` against a live database — it drops every table.
 
 Re-running it replaces that email's row rather than tripping the unique index.
 
+Linking an application to the account accepting it creates:
+
+```bash
+bunx wrangler d1 execute edunexus --remote --file=./migrations/0002_application_user.sql
+```
+
+### Accepting creates the account
+
+`PATCH /api/applications/:id` with `status: "accepted"` is what actually admits
+someone. It creates a `student` user from the application's name and email with
+a generated temporary password, stores the new user's id on `applications.userId`,
+and emails the applicant their sign-in details. The password is returned once, in
+the response's `account` block, so the admin can pass it on if the email bounces —
+it is hashed on the way into the database and never readable again.
+
+It is idempotent in both directions: an application that already has a `userId`
+never mints a second account, and an email address that already has a user is
+linked to the application rather than having its password reset.
+
+## Email
+
+`lib/email.ts` posts to the Resend HTTP API — no npm package, a Worker doesn't
+need one. Three transactional emails: application received, accepted (carrying
+the temporary password), and rejected. All are dispatched with
+`ctx.waitUntil()`, so Resend being slow or down can never fail the request that
+triggered it.
+
+```bash
+bunx wrangler secret put RESEND_API_KEY     # unset = emails are logged, not sent
+```
+
+`RESEND_FROM` is a public var in `wrangler.jsonc` and must sit on a domain
+verified in Resend. Two rules in this file are deliberate:
+
+- **Never log recipient addresses, passwords or links.** Event names and status
+  codes only.
+- Addresses on RFC 2606 reserved domains (`example.com`, `.test`, `.invalid`)
+  are skipped rather than sent. The Playwright suite applies with `@example.com`
+  addresses against production; sending to them would bounce every run and cost
+  the sending domain its reputation for nothing.
+
 ## AI
 
 `lib/ai.ts` prefers Gemini when `GOOGLE_GENERATIVE_AI_API_KEY` is set and falls

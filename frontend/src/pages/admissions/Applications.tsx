@@ -1,11 +1,19 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Trash2 } from "lucide-react";
+import { Check, Copy, Trash2 } from "lucide-react";
 
 import { api } from "@/lib/api";
-import type { application, applicationStatus } from "@/types";
+import type { acceptedAccount, application, applicationStatus } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -27,6 +35,33 @@ import CustomAlert from "@/components/global/CustomAlert";
 
 const STATUSES: applicationStatus[] = ["pending", "reviewing", "accepted", "rejected"];
 
+/** One-click copy for credentials the admin may need to read out loud. */
+const CopyField = ({ label, value }: { label: string; value: string }) => {
+  const [copied, setCopied] = useState(false);
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      toast.error("Could not copy — select the text and copy it manually");
+    }
+  };
+
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-md border bg-muted/40 px-3 py-2">
+      <div className="min-w-0">
+        <div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
+        <div className="truncate font-mono text-sm select-all">{value}</div>
+      </div>
+      <Button variant="ghost" size="icon" onClick={copy} aria-label={`Copy ${label}`}>
+        {copied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+      </Button>
+    </div>
+  );
+};
+
 const statusVariant: Record<applicationStatus, string> = {
   pending: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300",
   reviewing: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
@@ -46,6 +81,7 @@ const Applications = () => {
 
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [account, setAccount] = useState<(acceptedAccount & { fullName: string }) | null>(null);
 
   const fetchApplications = useCallback(async () => {
     try {
@@ -80,9 +116,22 @@ const Applications = () => {
 
   const updateStatus = async (id: string, next: applicationStatus) => {
     try {
-      await api.patch(`/applications/${id}`, { status: next });
-      setItems((prev) => prev.map((a) => (a._id === id ? { ...a, status: next } : a)));
-      toast.success(`Marked as ${next}`);
+      const { data } = await api.patch(`/applications/${id}`, { status: next });
+      setItems((prev) =>
+        prev.map((a) => (a._id === id ? { ...a, status: next, userId: data?.userId } : a)),
+      );
+
+      // Accepting creates the student account. The temporary password comes
+      // back exactly once, so it goes into a dialog rather than a toast that
+      // disappears on its own.
+      const account: acceptedAccount | undefined = data?.account;
+      if (account?.temporaryPassword) {
+        setAccount({ ...account, fullName: data?.fullName ?? "" });
+      } else if (account) {
+        toast.success(`Marked as ${next}`, { description: account.note });
+      } else {
+        toast.success(`Marked as ${next}`);
+      }
     } catch {
       toast.error("Could not update the application");
     }
@@ -219,6 +268,29 @@ const Applications = () => {
           totalPages={totalPages}
         />
       </div>
+
+      <Dialog open={!!account} onOpenChange={(open) => !open && setAccount(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Student account created</DialogTitle>
+            <DialogDescription>
+              We emailed these sign-in details to {account?.fullName || "the applicant"}. This is
+              the only time the password is shown — copy it now if you may need to pass it on.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-2">
+            <CopyField label="Email" value={account?.email ?? ""} />
+            <CopyField label="Temporary password" value={account?.temporaryPassword ?? ""} />
+          </div>
+
+          <p className="text-sm text-muted-foreground">{account?.note}</p>
+
+          <DialogFooter>
+            <Button onClick={() => setAccount(null)}>Done</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <CustomAlert
         isOpen={isAlertOpen}

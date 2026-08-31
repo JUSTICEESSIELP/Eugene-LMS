@@ -123,8 +123,10 @@ CREATE TABLE applications (
   message   TEXT,
   status    TEXT NOT NULL DEFAULT 'pending'
             CHECK (status IN ('pending','reviewing','accepted','rejected')),
+  userId    TEXT,                                -- set when an admin accepts
   createdAt TEXT NOT NULL,
   updatedAt TEXT NOT NULL
 );
 CREATE INDEX applications_status_idx  ON applications (status);
 CREATE INDEX applications_created_idx ON applications (createdAt DESC);
+CREATE INDEX applications_user_idx    ON applications (userId);

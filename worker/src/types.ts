@@ -8,6 +8,10 @@ export interface Env {
   GOOGLE_GENERATIVE_AI_API_KEY?: string;
   GEMINI_MODEL?: string;
   WORKERS_AI_MODEL?: string;
+  /** Secret: `wrangler secret put RESEND_API_KEY`. Unset = emails are logged. */
+  RESEND_API_KEY?: string;
+  /** Public var in wrangler.jsonc. Must be on a Resend-verified domain. */
+  RESEND_FROM?: string;
 }
 
 export interface AuthUser {

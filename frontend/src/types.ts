@@ -93,6 +93,20 @@ export interface application {
   program: string;
   message?: string | null;
   status: applicationStatus;
+  /** Set once an admin accepts and the student account exists. */
+  userId?: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+/**
+ * Returned once, by the accept call only. The temporary password is not stored
+ * in readable form anywhere, so this response is the admin's only copy.
+ */
+export interface acceptedAccount {
+  userId: string;
+  email: string;
+  created: boolean;
+  temporaryPassword?: string;
+  note: string;
 }

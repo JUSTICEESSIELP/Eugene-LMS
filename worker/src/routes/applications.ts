@@ -2,6 +2,12 @@ import { Hono } from "hono";
 import type { AppEnv } from "../types";
 import { authorize, protect } from "../lib/auth";
 import { logActivity, meta, paginate } from "../lib/db";
+import {
+  sendApplicationAcceptedEmail,
+  sendApplicationReceivedEmail,
+  sendApplicationRejectedEmail,
+} from "../lib/email";
+import { generateTempPassword, hashPassword } from "../lib/password";
 import { newId, now } from "../lib/ids";
 import type { Row } from "../lib/rows";
 
@@ -56,6 +62,14 @@ applications.post("/", async (c) => {
     .bind(id, fullName, email, phone || null, program, message || null, ts, ts)
     .run();
 
+  // Confirmation goes out after the response — a slow or down Resend must never
+  // make an applicant think their submission failed.
+  c.executionCtx.waitUntil(
+    sendApplicationReceivedEmail(c.env, { to: email, fullName, program }).catch((error) => {
+      console.error(JSON.stringify({ event: "application_received_email_failed" }), error);
+    }),
+  );
+
   return c.json(
     {
       _id: id,
@@ -99,6 +113,77 @@ applications.get("/", protect, authorize(["admin"]), async (c) => {
   });
 });
 
+/**
+ * What accepting an application did to the user table. `temporaryPassword` is
+ * returned exactly once — it is hashed on the way into the database, so this
+ * response is the only copy the admin will ever see.
+ */
+type AcceptedAccount = {
+  userId: string;
+  email: string;
+  created: boolean;
+  temporaryPassword?: string;
+  note: string;
+};
+
+/**
+ * Acceptance is what actually admits someone: it mints the student account the
+ * applicant signs in with. Idempotent — an application that already carries a
+ * `userId` never mints a second one, and an address that already has an account
+ * is linked rather than clobbered (we do not touch that account's password).
+ */
+const acceptApplication = async (
+  env: AppEnv["Bindings"],
+  row: Row,
+): Promise<AcceptedAccount> => {
+  const email = String(row.email);
+  const ts = now();
+
+  if (row.userId) {
+    return {
+      userId: String(row.userId),
+      email,
+      created: false,
+      note: "This application already has an account. No new account was created and no password was changed.",
+    };
+  }
+
+  const existing = await env.DB.prepare("SELECT id FROM users WHERE lower(email) = lower(?)")
+    .bind(email)
+    .first();
+  if (existing) {
+    // Link, don't clobber. Resetting a live password because an admin clicked
+    // "accepted" would lock a real person out of their account.
+    await env.DB.prepare("UPDATE applications SET userId = ? WHERE id = ?")
+      .bind(existing.id, row.id)
+      .run();
+    return {
+      userId: String(existing.id),
+      email,
+      created: false,
+      note: "This address already had an account, so it was linked to this application. Their existing password is unchanged.",
+    };
+  }
+
+  const temporaryPassword = generateTempPassword();
+  const userId = newId();
+  await env.DB.prepare(
+    `INSERT INTO users (id, name, email, password, role, isActive, studentClass, teacherSubject, createdAt, updatedAt)
+     VALUES (?, ?, ?, ?, 'student', 1, NULL, '[]', ?, ?)`,
+  )
+    .bind(userId, String(row.fullName), email, await hashPassword(temporaryPassword), ts, ts)
+    .run();
+  await env.DB.prepare("UPDATE applications SET userId = ? WHERE id = ?").bind(userId, row.id).run();
+
+  return {
+    userId,
+    email,
+    created: true,
+    temporaryPassword,
+    note: "No class is assigned yet — set one under People › Students.",
+  };
+};
+
 // PATCH /api/applications/:id — Private/Admin, move it through the pipeline
 applications.on(["PUT", "PATCH"], "/:id", protect, authorize(["admin"]), async (c) => {
   const id = c.req.param("id");
@@ -110,18 +195,49 @@ applications.on(["PUT", "PATCH"], "/:id", protect, authorize(["admin"]), async (
     return c.json({ message: `status must be one of: ${STATUSES.join(", ")}` }, 400);
   }
 
+  // Only a real transition notifies the applicant. Re-saving "accepted" on an
+  // already-accepted row must not re-send anything or mint a second account.
+  const isTransition = row.status !== status;
+  const account = status === "accepted" ? await acceptApplication(c.env, row as Row) : null;
+
   await c.env.DB.prepare("UPDATE applications SET status = ?, updatedAt = ? WHERE id = ?")
     .bind(status, now(), id)
     .run();
   await logActivity(c.env, {
     userId: c.get("user")._id,
     action: `Marked application from ${row.email} as ${status}`,
+    details: account?.created
+      ? `Created student account for ${row.email}`
+      : account
+        ? `Linked application to existing account for ${row.email}`
+        : undefined,
   });
+
+  if (isTransition && (status === "accepted" || status === "rejected")) {
+    const args = {
+      to: String(row.email),
+      fullName: String(row.fullName),
+      program: String(row.program),
+    };
+    // Same pattern as exam generation: the admin's request returns immediately
+    // and a failing Resend call never fails the status change.
+    c.executionCtx.waitUntil(
+      (status === "accepted"
+        ? sendApplicationAcceptedEmail(c.env, {
+            ...args,
+            temporaryPassword: account?.temporaryPassword,
+          })
+        : sendApplicationRejectedEmail(c.env, args)
+      ).catch((error) => {
+        console.error(JSON.stringify({ event: "application_decision_email_failed", status }), error);
+      }),
+    );
+  }
 
   const updated = await c.env.DB.prepare("SELECT * FROM applications WHERE id = ?")
     .bind(id)
     .first();
-  return c.json(applicationOut(updated!));
+  return c.json({ ...applicationOut(updated!), ...(account ? { account } : {}) });
 });
 
 // DELETE /api/applications/:id — Private/Admin

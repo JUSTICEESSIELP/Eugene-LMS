@@ -49,3 +49,25 @@ export const verifyPassword = async (
   for (let i = 0; i < bits.length; i++) diff |= bits[i]! ^ expected[i]!;
   return diff === 0;
 };
+
+/**
+ * A temporary password for an account someone else created — read off an email
+ * or dictated over the phone, so the alphabet drops the characters that get
+ * misread (0/O, 1/l/I). Rejection sampling, not `% alphabet.length`, because
+ * the modulo is biased when 256 isn't a multiple of the alphabet size.
+ */
+const TEMP_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
+
+export const generateTempPassword = (length = 16): string => {
+  const limit = 256 - (256 % TEMP_ALPHABET.length);
+  let out = "";
+  while (out.length < length) {
+    const bytes = crypto.getRandomValues(new Uint8Array(length));
+    for (const byte of bytes) {
+      if (byte >= limit) continue; // Biased tail — draw again.
+      out += TEMP_ALPHABET[byte % TEMP_ALPHABET.length];
+      if (out.length === length) break;
+    }
+  }
+  return out;
+};

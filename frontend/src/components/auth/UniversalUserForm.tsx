@@ -18,6 +18,7 @@ import { CustomSelect } from "@/components/global/CustomSelect";
 import { useEffect, useState } from "react";
 // import { useAuth } from "@/hooks/AuthProvider";
 import { CustomMultiSelect } from "@/components/global/CustomMultiSelect";
+import { Link } from "react-router";
 
 export type FormType = "login" | "create" | "update";
 interface Props {
@@ -38,15 +39,17 @@ const createSchema = (type: FormType) => {
       subjectIds: z.array(z.string()).optional(),
       email: z.email("Invalid email address"),
       role: z.string().optional(),
+      // 8, not 6: the API enforces 8, so a 6-character password passed the form
+      // and then came back as a 400 the user could not see.
       password:
         type === "update"
           ? z
               .string()
               .optional()
-              .refine((val) => !val || val.length >= 6, {
-                message: "Password must be at least 6 characters",
+              .refine((val) => !val || val.length >= 8, {
+                message: "Password must be at least 8 characters",
               })
-          : z.string().min(6, "Password must be at least 6 characters"),
+          : z.string().min(8, "Password must be at least 8 characters"),
       confirmPassword:
         type === "create"
           ? z.string().min(8, {
@@ -154,11 +157,16 @@ const UniversalUserForm = ({ type, initialData, onSuccess, role }: Props) => {
   async function onSubmit(data: FormValues) {
     try {
       // console.log(data);
+      // `...data` last would spread `classId`, `subjectIds` and
+      // `confirmPassword` over the wire; and the API reads `teacherSubject`
+      // (singular), so the plural key was silently dropped and picking subjects
+      // for a teacher saved nothing while still reporting success.
+      const { classId, subjectIds, confirmPassword: _confirm, ...rest } = data;
       const payload = {
-        studentClass: data.classId ? data.classId : undefined,
-        teacherSubjects: data.subjectIds ? data.subjectIds : [],
-        // role: role,
-        ...data,
+        ...rest,
+        role: role ?? data.role,
+        studentClass: classId ? classId : undefined,
+        teacherSubject: subjectIds ?? [],
       };
       if (isLogin) {
         const { data: user } = await api.post("/users/login", {
@@ -178,9 +186,20 @@ const UniversalUserForm = ({ type, initialData, onSuccess, role }: Props) => {
         toast.success("User updated successfully");
         if (onSuccess) onSuccess();
       }
-    } catch (error) {
-      console.log(error);
-      toast.error("An error occurred. Please try again.");
+    } catch (error: any) {
+      // Every failure here used to collapse into "An error occurred. Please try
+      // again." — including "Invalid email or password", "User already exists"
+      // and "Password must be at least 8 characters". On the app's only auth
+      // surface that left people with no idea what to change.
+      const status = error?.response?.status;
+      const message =
+        error?.response?.data?.message ??
+        (status === 429
+          ? "Too many attempts. Please wait a minute and try again."
+          : error?.request
+            ? "Could not reach the server. Check your connection and try again."
+            : "Something went wrong. Please try again.");
+      toast.error(message);
     }
   }
 
@@ -268,6 +287,16 @@ const UniversalUserForm = ({ type, initialData, onSuccess, role }: Props) => {
               placeholder={isUpdate ? "New Password (Optional)" : "Password"}
               disabled={pending}
             />
+            {isLogin && (
+              <div className="mt-2 text-right">
+                <Link
+                  to="/forgot-password"
+                  className="text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
+                >
+                  Forgot your password?
+                </Link>
+              </div>
+            )}
           </div>
           {type === "create" && (
             <div className="col-span-2">

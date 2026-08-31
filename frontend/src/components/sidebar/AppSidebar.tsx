@@ -46,11 +46,13 @@ export interface NavItem {
   }[];
 }
 
-// This is sample data.
 export const sidebardata = {
+  // The school this deployment is for. This was "Springfield High", marked
+  // "sample data" in a comment and rendered in the sidebar header of every
+  // page, for every tenant.
   teams: [
     {
-      name: "Springfield High",
+      name: "Veya",
       logo: School,
     },
   ],

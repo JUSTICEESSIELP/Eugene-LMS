@@ -78,10 +78,22 @@ const Exams = () => {
           <Card className="hover:shadow-md transition-shadow" key={exam._id}>
             <CardHeader>
               <div className="pb-2">
-                <Badge>
-                  {exam.isActive || new Date(exam.dueDate) < date
-                    ? "Active"
-                    : "Inactive"}
+                {/* Was `isActive || dueDate < now`, which is wrong on both
+                    halves: an unpublished exam whose due date had passed showed
+                    "Active", and nothing could show "Inactive" except a draft
+                    with a future due date. */}
+                <Badge
+                  variant={
+                    exam.isActive && new Date(exam.dueDate) > date
+                      ? "default"
+                      : "secondary"
+                  }
+                >
+                  {!exam.isActive
+                    ? "Draft"
+                    : new Date(exam.dueDate) < date
+                      ? "Closed"
+                      : "Active"}
                 </Badge>
                 <span className="text-xs text-muted-foreground ml-2">
                   {new Date(exam.dueDate).toLocaleDateString()}

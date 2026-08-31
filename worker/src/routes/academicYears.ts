@@ -4,6 +4,7 @@ import { authorize, protect } from "../lib/auth";
 import { countReferences, logActivity, meta, paginate } from "../lib/db";
 import { newId, now } from "../lib/ids";
 import { academicYearOut } from "../lib/rows";
+import { parseDate, parseString } from "../lib/validate";
 
 const years = new Hono<AppEnv>();
 
@@ -44,13 +45,20 @@ years.get("/current", protect, async (c) => {
 
 // POST /api/academic-years/create — Private/Admin
 years.post("/create", protect, authorize(["admin"]), async (c) => {
-  const { name, fromYear, toYear, isCurrent } = await c.req.json<any>().catch(() => ({}));
-  if (!name || !fromYear || !toYear) {
+  const body = await c.req.json<any>().catch(() => ({}));
+  const { fromYear, toYear, isCurrent } = body;
+  if (!body.name || !fromYear || !toYear) {
     return c.json({ message: "name, fromYear and toYear are required" }, 400);
   }
+  const name = parseString(body.name, "name", { max: 120 });
 
-  const from = new Date(fromYear).toISOString();
-  const to = new Date(toYear).toISOString();
+  // `new Date("nonsense").toISOString()` throws RangeError, which reached the
+  // client as a 500 carrying "Invalid time value".
+  const from = parseDate(fromYear, "fromYear");
+  const to = parseDate(toYear, "toYear");
+  if (new Date(to).getTime() <= new Date(from).getTime()) {
+    return c.json({ message: "toYear must be after fromYear" }, 400);
+  }
 
   const existing = await c.env.DB.prepare(
     "SELECT id FROM academic_years WHERE fromYear = ? AND toYear = ?",
@@ -99,10 +107,27 @@ years.on(["PUT", "PATCH"], "/update/:id", protect, authorize(["admin"]), async (
       .run();
   }
 
-  const name = body.name ?? row.name;
-  const fromYear = body.fromYear ? new Date(body.fromYear).toISOString() : row.fromYear;
-  const toYear = body.toYear ? new Date(body.toYear).toISOString() : row.toYear;
+  const name =
+    body.name !== undefined ? parseString(body.name, "name", { max: 120 }) : row.name;
+  const fromYear = body.fromYear ? parseDate(body.fromYear, "fromYear") : row.fromYear;
+  const toYear = body.toYear ? parseDate(body.toYear, "toYear") : row.toYear;
   const isCurrent = body.isCurrent !== undefined ? (body.isCurrent ? 1 : 0) : row.isCurrent;
+
+  // Unsetting the only current year strands every non-admin: the SPA refuses to
+  // render without one. Refuse rather than half-configure the school.
+  if (row.isCurrent === 1 && isCurrent === 0) {
+    const other = await c.env.DB.prepare(
+      "SELECT COUNT(*) AS total FROM academic_years WHERE isCurrent = 1 AND id != ?",
+    )
+      .bind(id)
+      .first();
+    if (Number(other?.total ?? 0) === 0) {
+      return c.json(
+        { message: "Make another year current first — the school needs exactly one." },
+        400,
+      );
+    }
+  }
 
   await c.env.DB.prepare(
     `UPDATE academic_years SET name = ?, fromYear = ?, toYear = ?, isCurrent = ?, updatedAt = ?

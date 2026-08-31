@@ -114,7 +114,11 @@ const ClassTable = ({
           )}
         </TableBody>
       </Table>
-      {data.length > 10 && (
+      {/* Was `data.length > 10` while every one of these pages requests
+          limit=10 — so the condition could never be true and pagination was
+          dead on all four screens: with 40 students only the newest 10 were
+          ever reachable, and no control existed to advance. */}
+      {totalPages > 1 && (
         <CustomPagination
           loading={loading}
           page={page}

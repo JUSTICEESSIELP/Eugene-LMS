@@ -19,15 +19,18 @@ worker/
     jobs.ts           AI generation + grading (was Inngest)
     lib/
       ai.ts           Gemini REST, with Workers AI fallback
-      auth.ts         JWT cookie auth, `protect` / `authorize`
+      auth.ts         JWT cookie auth, `protect` / `authorize`, revocation
       db.ts           `lookup()` (Mongoose `.populate()` stand-in), pagination
       ids.ts          24-hex ObjectId-shaped ids
       password.ts     PBKDF2-SHA256 via WebCrypto
+      validate.ts     Shared input guards (dates, roles, bounded ints/strings)
       rows.ts         D1 rows -> the JSON shapes the frontend expects
     routes/           users, academicYears, subjects, classes, timetables,
                       exams, dashboard, activities, applications
   migrations/
     0001_applications.sql   Adds the admissions table to a live database
+    0002_application_user.sql  Links an application to the account it created
+    0003_sessions_resets_attempts.sql  Reset tokens, session epoch, exam clocks
 ```
 
 ## How the port maps to the original
@@ -148,6 +151,69 @@ verified in Resend. Two rules in this file are deliberate:
   are skipped rather than sent. The Playwright suite applies with `@example.com`
   addresses against production; sending to them would bounce every run and cost
   the sending domain its reputation for nothing.
+
+## Sessions
+
+A JWT lives 30 days, so "log out" has to mean more than dropping the cookie.
+Every token carries `iatMs` (its issue time in milliseconds) and every user row
+carries `sessionEpoch`. `protect` refuses any token minted before that epoch, and
+three things move it:
+
+- signing out,
+- an admin deactivating the account,
+- the password changing, whether by admin edit or by reset.
+
+`protect` also refuses a token whose account is no longer `isActive`, so
+deactivation takes effect on the next request rather than whenever the token
+happens to expire. Milliseconds rather than the standard second-resolution `iat`
+because a sign-out and the sign-in right after it can land in the same second,
+and at that resolution the comparison either keeps the old token alive or kills
+the new one.
+
+## Password reset
+
+`POST /api/users/forgot-password` always answers 200 with the same body — saying
+"no account with that address" would make it a way to test who studies here.
+When the address does have an active account it stores the **SHA-256** of a
+32-byte random token (never the token), valid for one hour and one use, and mails
+the link. `POST /api/users/reset-password` burns the token, sets the password and
+revokes every existing session.
+
+Requesting a new link deletes any previous one for that user.
+
+## Rate limits
+
+IP-keyed Cloudflare Rate Limit bindings, applied at the top of the handler before
+any database or email work:
+
+| Binding | Endpoint | Budget |
+| --- | --- | --- |
+| `RL_APPLY` | `POST /api/applications` | 10/min |
+| `RL_AUTH` | `POST /api/users/login` | 10/min |
+| `RL_RESET` | forgot- and reset-password | 5/min |
+
+`forgot-password` returns its normal 200 on a limiter hit rather than a 429 — a
+429 there would confirm to an attacker that they had found the interesting
+endpoint, and the generic answer is indistinguishable either way.
+
+The application budget is the loosest of the three because applicants share IPs:
+an open day, a school common room or one family on a home connection all arrive
+from a single address, and turning real applicants away is a worse failure than
+allowing ten emails a minute from one place.
+
+## Exam timing
+
+`duration` used to be printed on the exam page and enforced by nothing. The
+server now records an `exam_attempts` row the first time a student opens
+`GET /api/exams/:id`, which is also the only way to read the questions — so the
+clock cannot be dodged by declining to start it. That response carries
+`attempt: { startedAt, expiresAt, remainingMs }` for the countdown, and
+`POST /api/exams/:id/submit` refuses a submission past `duration` (plus 15
+seconds of grace for the request itself). Staff previewing a paper never create
+an attempt.
+
+The client-side countdown auto-submits at zero. That is a courtesy so a student
+does not lose the answers they typed — the refusal on the server is the control.
 
 ## AI
 

@@ -2,6 +2,8 @@ import { createBrowserRouter } from "react-router"; // Keeping your requested im
 import Home from "@/pages/Home";
 import Login from "@/pages/Login";
 import Apply from "@/pages/Apply";
+import ForgotPassword from "@/pages/ForgotPassword";
+import ResetPassword from "@/pages/ResetPassword";
 import Applications from "@/pages/admissions/Applications";
 import PrivateRoutes from "@/pages/routes/PrivateRoutes";
 import Dashboard from "@/pages/Dashboard";
@@ -24,6 +26,10 @@ export const router = createBrowserRouter([
       { index: true, element: <Home /> },
       { path: "login", element: <Login /> },
       { path: "apply", element: <Apply /> },
+      // Password recovery. Public by necessity — the whole point is that the
+      // person cannot sign in.
+      { path: "forgot-password", element: <ForgotPassword /> },
+      { path: "reset-password", element: <ResetPassword /> },
 
       // Everything below requires a session. Each group's `allow` list mirrors
       // what the API actually enforces — the sidebar hid these links, but the

@@ -63,10 +63,19 @@ timetables.post("/generate", protect, authorize(["admin"]), async (c) => {
 
 // GET /api/timetables/:classId — Private, periods populated
 timetables.get("/:classId", protect, async (c) => {
+  const user = c.get("user");
+  const classId = c.req.param("classId");
+  // This was `protect` and nothing else, so any signed-in account could read
+  // any class's schedule — including which teacher is where, all week. Staff
+  // work across classes; everyone else gets their own.
+  if (user.role !== "admin" && user.role !== "teacher" && classId !== user.studentClass) {
+    return c.json({ message: "You are not authorized to view this timetable." }, 403);
+  }
+
   const row = await c.env.DB.prepare(
     "SELECT * FROM timetables WHERE class = ? ORDER BY updatedAt DESC LIMIT 1",
   )
-    .bind(c.req.param("classId"))
+    .bind(classId)
     .first();
 
   if (!row) return c.json({ message: "Timetable not found" }, 404);

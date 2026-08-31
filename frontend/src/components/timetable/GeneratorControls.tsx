@@ -69,11 +69,16 @@ const GeneratorControls = ({
         setClasses(clsRes.data.classes);
         setYears(yearRes.data.years);
 
-        // Auto-select current year
-        const current = Array.isArray(yearRes.data)
-          ? yearRes.data.find((y: academicYear) => y.isCurrent)
-          : yearRes.data;
-
+        // Auto-select current year.
+        //
+        // This read `yearRes.data` as an array, but the endpoint returns
+        // `{ years, pagination }`. The array branch never ran, so `current` was
+        // the whole response object, `current._id` was undefined, and the year
+        // was never selected — leaving "Generate with AI" disabled with nothing
+        // on screen explaining why.
+        const current = (yearRes.data.years as academicYear[] | undefined)?.find(
+          (y) => y.isCurrent,
+        );
         if (current?._id) setSelectedYear(current._id);
       } catch (error) {
         toast.error("Failed to load selection data");

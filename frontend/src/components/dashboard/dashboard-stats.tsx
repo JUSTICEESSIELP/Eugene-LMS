@@ -26,8 +26,11 @@ export function DashboardStats({ role, data }: StatsProps) {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="display-page text-2xl">{data.totalStudents || 0}</div>
-            <p className="text-xs text-muted-foreground">+12% from last year</p>
+            <div className="display-page text-2xl">{data.totalStudents ?? 0}</div>
+            {/* This said "+12% from last year". There is no trend in the API and
+                never was — a fixed literal under a genuinely live number, which
+                is what made every other figure on the page suspect. */}
+            <p className="text-xs text-muted-foreground">Enrolled</p>
           </CardContent>
         </Card>
         <Card>
@@ -142,7 +145,9 @@ export function DashboardStats({ role, data }: StatsProps) {
           <div className="display-page text-2xl">
             {data.pendingAssignments || 0}
           </div>
-          <p className="text-xs text-muted-foreground">Due this week</p>
+          {/* The API counts every open exam with a future due date, not just
+              this week's, so "Due this week" overstated what the number meant. */}
+          <p className="text-xs text-muted-foreground">Open, not yet due</p>
         </CardContent>
       </Card>
       <Card>

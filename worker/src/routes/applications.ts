@@ -10,10 +10,30 @@ import {
 import { generateTempPassword, hashPassword } from "../lib/password";
 import { newId, now } from "../lib/ids";
 import type { Row } from "../lib/rows";
+import { revokeSessions } from "../lib/auth";
+import { isEmail, parseString } from "../lib/validate";
 
 const applications = new Hono<AppEnv>();
 
 const STATUSES = ["pending", "reviewing", "accepted", "rejected"] as const;
+type Status = (typeof STATUSES)[number];
+
+/**
+ * Which moves the pipeline allows.
+ *
+ * There were no rules at all: an application could go accepted → pending →
+ * accepted → rejected, and each hop fired another email. The second acceptance
+ * sent a "your account is ready" mail with no temporary password in it (the
+ * account already existed), telling the applicant to sign in with a password
+ * they had never chosen. `accepted` and `rejected` are terminal — an admin who
+ * truly needs to redo one can delete the application.
+ */
+const TRANSITIONS: Record<Status, readonly Status[]> = {
+  pending: ["reviewing", "accepted", "rejected"],
+  reviewing: ["pending", "accepted", "rejected"],
+  accepted: [],
+  rejected: [],
+};
 
 const applicationOut = (row: Row): Row => {
   const { id, ...rest } = row;
@@ -23,26 +43,41 @@ const applicationOut = (row: Row): Row => {
 // POST /api/applications — PUBLIC. This is the one write path on the whole API
 // that does not require a session: it backs the "Apply Now" page.
 applications.post("/", async (c) => {
+  // 5/min/IP, before any database or email work. This is the only write path on
+  // the API with no session behind it, and it now triggers an outbound Resend
+  // call — without a limiter it is a way to make Veya send mail on demand.
+  const ip = c.req.header("CF-Connecting-IP") ?? "anon";
+  const rl = await c.env.RL_APPLY.limit({ key: ip });
+  if (!rl.success) {
+    return c.json(
+      { message: "Too many applications from this connection. Try again shortly." },
+      429,
+    );
+  }
+
   const body = await c.req.json<any>().catch(() => ({}));
-  const fullName = String(body.fullName ?? "").trim();
-  const email = String(body.email ?? "").trim();
-  const program = String(body.program ?? "").trim();
-  const phone = String(body.phone ?? "").trim();
-  const message = String(body.message ?? "").trim();
+  const fullName = parseString(body.fullName, "Full name", { max: 120 });
+  const email = parseString(body.email, "Email", { max: 200 });
+  const program = parseString(body.program, "Program", { max: 120 });
+  const phone = parseString(body.phone, "Phone", { max: 40, required: false, fallback: "" });
+  const message = parseString(body.message, "Message", {
+    max: 2000,
+    required: false,
+    fallback: "",
+  });
 
   if (!fullName || !email || !program) {
     return c.json({ message: "Full name, email and program are required" }, 400);
   }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  if (!isEmail(email)) {
     return c.json({ message: "Please enter a valid email address" }, 400);
   }
-  // Cheap guards against someone pasting a novel into an unauthenticated endpoint.
-  if (fullName.length > 120 || email.length > 200 || program.length > 120 || message.length > 2000) {
-    return c.json({ message: "One of the fields is too long" }, 400);
-  }
 
+  // The guard used to match `status = 'pending'` only, so the moment an admin
+  // moved an application to `reviewing` the same address could apply again for
+  // the same programme and re-trigger the confirmation email.
   const existing = await c.env.DB.prepare(
-    "SELECT id FROM applications WHERE lower(email) = lower(?) AND program = ? AND status = 'pending'",
+    "SELECT id, status FROM applications WHERE lower(email) = lower(?) AND program = ? AND status IN ('pending','reviewing')",
   )
     .bind(email, program)
     .first();
@@ -195,10 +230,35 @@ applications.on(["PUT", "PATCH"], "/:id", protect, authorize(["admin"]), async (
     return c.json({ message: `status must be one of: ${STATUSES.join(", ")}` }, 400);
   }
 
+  const from = row.status as Status;
   // Only a real transition notifies the applicant. Re-saving "accepted" on an
   // already-accepted row must not re-send anything or mint a second account.
-  const isTransition = row.status !== status;
+  const isTransition = from !== status;
+  if (isTransition && !TRANSITIONS[from].includes(status as Status)) {
+    return c.json(
+      {
+        message:
+          TRANSITIONS[from].length === 0
+            ? `This application is already ${from} and cannot be changed.`
+            : `An application that is ${from} can only move to: ${TRANSITIONS[from].join(", ")}.`,
+      },
+      409,
+    );
+  }
   const account = status === "accepted" ? await acceptApplication(c.env, row as Row) : null;
+
+  // Rejecting an application that had already minted a student account used to
+  // leave that account live and signed-in-able. It cannot happen through the
+  // pipeline any more (accepted is terminal), but an older row can still be in
+  // that state, so undo it properly rather than trusting the new rule alone.
+  if (status === "rejected" && row.userId) {
+    await c.env.DB.prepare(
+      "UPDATE users SET isActive = 0, updatedAt = ? WHERE id = ?",
+    )
+      .bind(now(), row.userId)
+      .run();
+    await revokeSessions(c.env.DB, String(row.userId));
+  }
 
   await c.env.DB.prepare("UPDATE applications SET status = ?, updatedAt = ? WHERE id = ?")
     .bind(status, now(), id)

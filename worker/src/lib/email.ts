@@ -106,6 +106,26 @@ export async function sendApplicationAcceptedEmail(
   );
 }
 
+/**
+ * Sent when someone asks to reset a forgotten password.
+ *
+ * The token reaches the recipient and nowhere else: it is never logged, and only
+ * its SHA-256 is stored. `send()` already refuses to echo addresses or bodies,
+ * so nothing here needs to be redacted at the call site.
+ */
+export async function sendPasswordResetEmail(
+  env: EmailEnv,
+  args: { to: string; fullName: string; token: string; expiresInMinutes: number },
+): Promise<SendResult> {
+  return send(
+    env,
+    args.to,
+    "Reset your Veya password",
+    renderResetHtml(args),
+    renderResetText(args),
+  );
+}
+
 /** A short, human decline. */
 export async function sendApplicationRejectedEmail(
   env: EmailEnv,
@@ -248,6 +268,54 @@ function renderAcceptedHtml(args: {
       button(`${SITE_URL}/login`, "Sign in to Veya") +
       p(
         `<span style="font-size:13px;color:rgba(28,26,25,.55);">Button not working? Go to <a href="${SITE_URL}/login" style="color:${INDIGO};font-weight:bold;">${SITE_URL}/login</a></span>`,
+      ),
+  );
+}
+
+const resetLink = (token: string) =>
+  `${SITE_URL}/reset-password?token=${encodeURIComponent(token)}`;
+
+function renderResetText(args: {
+  fullName: string;
+  token: string;
+  expiresInMinutes: number;
+}): string {
+  return [
+    "Veya — reset your password",
+    "",
+    `Hi ${firstName(args.fullName)},`,
+    "",
+    "Someone asked to reset the password on your Veya account. Open this link to choose a new one:",
+    "",
+    `  ${resetLink(args.token)}`,
+    "",
+    `The link works once and expires in ${args.expiresInMinutes} minutes.`,
+    "",
+    "If this wasn't you, ignore this email — your password stays as it is.",
+    "",
+    "Veya",
+    SITE_URL,
+  ].join("\n");
+}
+
+function renderResetHtml(args: {
+  fullName: string;
+  token: string;
+  expiresInMinutes: number;
+}): string {
+  const href = resetLink(args.token);
+  return shell(
+    h1("Reset your password.") +
+      p(`Hi ${esc(firstName(args.fullName))},`) +
+      p(
+        "Someone asked to reset the password on your Veya account. Choose a new one here:",
+      ) +
+      button(href, "Choose a new password") +
+      p(
+        `<span style="font-size:13px;color:rgba(28,26,25,.55);">The link works once and expires in ${args.expiresInMinutes} minutes. Button not working? Copy this into your browser:<br /><span style="word-break:break-all;color:${INDIGO};">${esc(href)}</span></span>`,
+      ) +
+      p(
+        "If this wasn't you, you can ignore this email — your password stays exactly as it is.",
       ),
   );
 }

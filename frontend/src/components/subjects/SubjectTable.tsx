@@ -34,6 +34,8 @@ interface Props {
   page: number;
   setPage: (page: number) => void;
   totalPages: number;
+  /** Writes on /api/subjects are admin-only; teachers get a read-only view. */
+  canManage?: boolean;
 }
 
 export function SubjectTable({
@@ -44,6 +46,7 @@ export function SubjectTable({
   page,
   setPage,
   totalPages,
+  canManage = true,
 }: Props) {
   return (
     <div className="border rounded-md">
@@ -92,6 +95,7 @@ export function SubjectTable({
                   )}
                 </TableCell>
                 <TableCell className="text-right">
+                  {canManage && (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" className="h-8 w-8 p-0">
@@ -111,13 +115,18 @@ export function SubjectTable({
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
+                  )}
                 </TableCell>
               </TableRow>
             ))
           )}
         </TableBody>
       </Table>
-      {data.length > 10 && (
+      {/* Was `data.length > 10` while every one of these pages requests
+          limit=10 — so the condition could never be true and pagination was
+          dead on all four screens: with 40 students only the newest 10 were
+          ever reachable, and no control existed to advance. */}
+      {totalPages > 1 && (
         <CustomPagination
           loading={loading}
           page={page}

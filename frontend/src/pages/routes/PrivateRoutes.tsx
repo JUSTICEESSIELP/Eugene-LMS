@@ -1,6 +1,6 @@
 import { useAuth } from "@/hooks/AuthProvider";
 import { Navigate, Outlet, useLocation } from "react-router";
-import { Loader2 } from "lucide-react"; // Optional: for loading spinner
+import { Loader2, CalendarX } from "lucide-react";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/sidebar/AppSidebar";
 
@@ -30,9 +30,30 @@ const PrivateRoutes = () => {
       }
       // If they ARE on the settings page, we let code flow down to render the Sidebar/Outlet
     }
-    // Scenario B: Non-admins cannot use the system without an active year
+    // Scenario B: non-admins cannot use the system without an active year.
+    //
+    // This used to `<Navigate to="/login">`, which is the same infinite loop the
+    // admin branch above is commented as guarding against: /login sees a signed-in
+    // user and sends them straight back to /dashboard, which lands here again.
+    // The result was a blank white page and no way into the app for every
+    // teacher, student and parent — which is also the state a freshly seeded
+    // school is in, before anyone marks a year current.
+    //
+    // A dead end that explains itself beats a redirect that cannot terminate.
     else {
-      return <Navigate to="/login" replace />;
+      return (
+        <div className="h-screen w-full flex items-center justify-center p-6">
+          <div className="max-w-md text-center space-y-3">
+            <CalendarX className="h-10 w-10 text-muted-foreground mx-auto" />
+            <h1 className="text-xl font-semibold">The school year isn't set up yet</h1>
+            <p className="text-muted-foreground text-sm">
+              An administrator needs to mark an academic year as current before
+              classes, timetables and exams can be used. Nothing is wrong with
+              your account — please check back shortly.
+            </p>
+          </div>
+        </div>
+      );
     }
   }
   return (

@@ -61,13 +61,27 @@ export interface exam {
   questions: question[];
   dueDate: Date;
   isActive: boolean;
+  attempt?: examAttempt | null;
 }
 
 export interface Submission {
   _id: string;
   score: number;
+  /** Sum of the questions' `points` — not the question count. */
+  totalPoints?: number;
   exam: exam; // The populated exam with answers
   answers: { questionId: string; answer: string }[];
+}
+
+/**
+ * The server-side clock for one student's sitting. Present on `GET /exams/:id`
+ * only for a student who has not submitted yet; the deadline is the server's,
+ * never one the client computed.
+ */
+export interface examAttempt {
+  startedAt: string;
+  expiresAt: string;
+  remainingMs: number;
 }
 
 export interface period {

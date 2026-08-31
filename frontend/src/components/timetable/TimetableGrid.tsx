@@ -12,6 +12,25 @@ interface Props {
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
 
 const TimetableGrid = ({ schedule, isLoading }: Props) => {
+  // These hooks must run before any early return: with the `isLoading` and
+  // empty-schedule branches above them, an empty->populated transition changed
+  // the number of hooks called between renders. React Compiler happens to
+  // compile this into an unconditional memo-cache read, so it does not crash
+  // today — but it is a Rules of Hooks violation that would become a real
+  // "rendered more hooks than during the previous render" crash the moment the
+  // compiler is removed or bails out on this file.
+  const timeSlots = useMemo(() => {
+    if (!schedule) return [];
+    const times = new Set<string>();
+    schedule.forEach((day) => {
+      day.periods.forEach((period) => {
+        times.add(period.startTime);
+      });
+    });
+    //   the issue is here, we need to sort the times
+    return Array.from(times).sort();
+  }, [schedule]);
+
   // loading
   if (isLoading) {
     return (
@@ -36,18 +55,6 @@ const TimetableGrid = ({ schedule, isLoading }: Props) => {
       </div>
     );
   }
-
-  const timeSlots = useMemo(() => {
-    if (!schedule) return [];
-    const times = new Set<string>();
-    schedule.forEach((day) => {
-      day.periods.forEach((period) => {
-        times.add(period.startTime);
-      });
-    });
-    //   the issue is here, we need to sort the times
-    return Array.from(times).sort();
-  }, [schedule]);
 
   const getRowLabel = (startTime: string) => {
     for (const day of schedule) {

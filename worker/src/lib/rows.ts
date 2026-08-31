@@ -28,6 +28,9 @@ export const userOut = (row: Row, opts: { password?: boolean } = {}): Row => {
     studentClass: row.studentClass ?? null,
   };
   if (!opts.password) delete out.password;
+  // Internal bookkeeping for token revocation. Nothing outside `protect` has any
+  // use for it, and it would otherwise ride along in every user payload.
+  delete out.sessionEpoch;
   return out;
 };
 

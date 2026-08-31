@@ -217,7 +217,7 @@ export const gradeSubmission = async (
     studentId,
     answers,
   }: { examId: string; studentId: string; answers: any[] },
-  actor?: { role: string; studentClass: string | null },
+  actor?: { role: string; studentClass: string | null; graceMs?: number },
 ) => {
   const existing = await env.DB.prepare(
     "SELECT id FROM submissions WHERE exam = ? AND student = ?",
@@ -242,6 +242,25 @@ export const gradeSubmission = async (
     }
     if (exam.dueDate && new Date(exam.dueDate as string).getTime() < Date.now()) {
       throw new SubmissionNotAllowed("The due date for this exam has passed");
+    }
+
+    // `duration` was printed on the exam page and enforced nowhere: no timer,
+    // and this endpoint never looked at how long the student had been sitting
+    // there. The clock starts when they first open the paper (GET /exams/:id
+    // records the attempt), so it cannot be dodged by refusing to start it.
+    const attempt = await env.DB.prepare(
+      "SELECT startedAt FROM exam_attempts WHERE exam = ? AND student = ?",
+    )
+      .bind(examId, studentId)
+      .first();
+    if (attempt) {
+      const minutes = Number(exam.duration) || 60;
+      const elapsed = Date.now() - new Date(attempt.startedAt as string).getTime();
+      if (elapsed > minutes * 60_000 + (actor.graceMs ?? 0)) {
+        throw new SubmissionNotAllowed(
+          `Your ${minutes}-minute window for this exam has closed.`,
+        );
+      }
     }
   }
 

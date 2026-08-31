@@ -57,10 +57,18 @@ export const logActivity = async (
   }
 };
 
-/** `{ total, page, pages, limit }` — same meta block the old API returned. */
+/**
+ * `{ total, page, pages, limit }` — same meta block the old API returned.
+ *
+ * `limit` is clamped: it was only floored at 1, so `?limit=100000` was honoured
+ * and any signed-in caller could ask for the whole table in one query.
+ */
+export const MAX_PAGE_SIZE = 100;
+
 export const paginate = (url: URL, fallbackLimit = 10) => {
   const page = Math.max(1, parseInt(url.searchParams.get("page") ?? "") || 1);
-  const limit = Math.max(1, parseInt(url.searchParams.get("limit") ?? "") || fallbackLimit);
+  const requested = parseInt(url.searchParams.get("limit") ?? "") || fallbackLimit;
+  const limit = Math.min(MAX_PAGE_SIZE, Math.max(1, requested));
   return { page, limit, offset: (page - 1) * limit };
 };
 

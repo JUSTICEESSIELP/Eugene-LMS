@@ -52,10 +52,13 @@ dashboard.get("/stats", protect, async (c) => {
   if (user.role === "teacher") {
     const [myClassesCount, pendingGrading] = await Promise.all([
       count(db, "SELECT COUNT(*) AS total FROM classes WHERE classTeacher = ?", [user._id]),
+      // This counted `score = 0`, which is not "pending grading" — grading runs
+      // inline at submit time, so nothing is ever pending. It was a count of
+      // students who scored zero, displayed under "Submissions to review".
       count(
         db,
         `SELECT COUNT(*) AS total FROM submissions
-         WHERE score = 0 AND exam IN (SELECT id FROM exams WHERE teacher = ?)`,
+         WHERE exam IN (SELECT id FROM exams WHERE teacher = ?)`,
         [user._id],
       ),
     ]);

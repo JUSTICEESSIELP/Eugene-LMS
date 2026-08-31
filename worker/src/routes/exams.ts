@@ -5,31 +5,114 @@ import { logActivity, lookup, paginate, populated } from "../lib/db";
 import { newId, now } from "../lib/ids";
 import { examOut, parseJson, submissionOut } from "../lib/rows";
 import { generateExamJob, gradeSubmission, SubmissionNotAllowed } from "../jobs";
+import { BadRequest, parseInt_, parseOptionalDate, parseString } from "../lib/validate";
 
 const exams = new Hono<AppEnv>();
 
 const canSeeAnswers = (role: string) => role === "teacher" || role === "admin";
 
+/** An exam nobody has published yet is staff-only, whatever class it belongs to. */
+const isStaff = (role: string) => role === "teacher" || role === "admin";
+
+// A paper cannot run for a quarter of an hour or for a fortnight.
+const MIN_DURATION = 1;
+const MAX_DURATION = 8 * 60;
+const MAX_QUESTIONS = 200;
+
+/** Grace on the server-side clock, so a slow final request isn't punished. */
+const SUBMIT_GRACE_MS = 15_000;
+
+const dueOrDefault = (value: unknown) =>
+  parseOptionalDate(value, "dueDate") ??
+  new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+
+/**
+ * Normalises a question off the wire. `points` used to be `Number(q.points) || 1`,
+ * which happily kept -99 — a negative-weight question makes a score
+ * uninterpretable and can push a total below zero.
+ */
+const normaliseQuestion = (q: any) => ({
+  _id: q?._id ?? newId(),
+  questionText: parseString(q?.questionText, "questionText", { max: 2000, fallback: "" }),
+  type: q?.type === "SHORT_ANSWER" ? "SHORT_ANSWER" : "MCQ",
+  options: Array.isArray(q?.options) ? q.options.slice(0, 12).map((o: unknown) => String(o)) : [],
+  correctAnswer: String(q?.correctAnswer ?? ""),
+  points: parseInt_(q?.points, "points", { min: 1, max: 100, fallback: 1 }),
+});
+
+/**
+ * When this student first opened the paper. `duration` was rendered on the exam
+ * page and enforced by nothing — no timer, and the submit endpoint never looked
+ * at elapsed time. Reading the questions is what starts the clock, so there is
+ * no way to see the paper without the clock running.
+ */
+const startAttempt = async (
+  db: D1Database,
+  examId: string,
+  studentId: string,
+): Promise<string> => {
+  const existing = await db
+    .prepare("SELECT startedAt FROM exam_attempts WHERE exam = ? AND student = ?")
+    .bind(examId, studentId)
+    .first();
+  if (existing) return String(existing.startedAt);
+
+  const startedAt = now();
+  // Two tabs opening at once both insert; the unique index keeps the first.
+  await db
+    .prepare(
+      "INSERT OR IGNORE INTO exam_attempts (id, exam, student, startedAt) VALUES (?, ?, ?, ?)",
+    )
+    .bind(newId(), examId, studentId, startedAt)
+    .run();
+  const row = await db
+    .prepare("SELECT startedAt FROM exam_attempts WHERE exam = ? AND student = ?")
+    .bind(examId, studentId)
+    .first();
+  return String(row?.startedAt ?? startedAt);
+};
+
+/** What the client needs to render a countdown it cannot lie its way past. */
+const attemptWindow = (startedAt: string, durationMinutes: number) => {
+  const started = new Date(startedAt).getTime();
+  const expiresAt = started + durationMinutes * 60_000;
+  return {
+    startedAt,
+    expiresAt: new Date(expiresAt).toISOString(),
+    remainingMs: Math.max(0, expiresAt - Date.now()),
+  };
+};
+
 // POST /api/exams/generate — Private (Teacher & Admin)
 exams.post("/generate", protect, authorize(["teacher", "admin"]), async (c) => {
   const body = await c.req.json<any>().catch(() => ({}));
-  const { title, subject, class: classId, duration, dueDate, topic, difficulty, count } = body;
+  const { title, subject, class: classId, duration, dueDate, topic, difficulty } = body;
 
   if (!subject || !classId || !topic) {
     return c.json({ message: "subject, class and topic are required" }, 400);
   }
+  const count = parseInt_(body.count, "count", { min: 1, max: 50, fallback: 10 });
+  const minutes = parseInt_(duration, "duration", {
+    min: MIN_DURATION,
+    max: MAX_DURATION,
+    fallback: 60,
+  });
+  const due = dueOrDefault(dueDate);
 
   const subjectRow = await c.env.DB.prepare("SELECT * FROM subjects WHERE id = ?")
     .bind(subject)
     .first();
   if (!subjectRow) return c.json({ message: "Subject not found" }, 404);
+  // The class was never checked, so an exam could be created against an id that
+  // does not exist — invisible to every student, and rendering a raw hex id.
+  const classRow = await c.env.DB.prepare("SELECT id FROM classes WHERE id = ?")
+    .bind(classId)
+    .first();
+  if (!classRow) return c.json({ message: "Class not found" }, 404);
 
   const teacherId = c.get("user")._id;
   const ts = now();
   const examId = newId();
-  const due = dueDate
-    ? new Date(dueDate).toISOString()
-    : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
   await c.env.DB.prepare(
     `INSERT INTO exams (id, title, subject, class, teacher, duration, dueDate, isActive, questions, status, createdAt, updatedAt)
@@ -41,7 +124,7 @@ exams.post("/generate", protect, authorize(["teacher", "admin"]), async (c) => {
       subject,
       classId,
       teacherId,
-      Number(duration) || 60,
+      minutes,
       due,
       ts,
       ts,
@@ -59,7 +142,7 @@ exams.post("/generate", protect, authorize(["teacher", "admin"]), async (c) => {
       topic,
       subjectName: subjectRow.name as string,
       difficulty: difficulty || "Medium",
-      count: Number(count) || 10,
+      count,
     }),
   );
 
@@ -69,21 +152,33 @@ exams.post("/generate", protect, authorize(["teacher", "admin"]), async (c) => {
 // POST /api/exams — Private (Teacher & Admin), manual create
 exams.post("/", protect, authorize(["teacher", "admin"]), async (c) => {
   const body = await c.req.json<any>().catch(() => ({}));
-  const { title, subject, class: classId, duration, dueDate, isActive, questions } = body;
-  if (!title || !subject || !classId) {
+  const { subject, class: classId, duration, dueDate, isActive, questions } = body;
+  const title = parseString(body.title, "title", { max: 200 });
+  if (!subject || !classId) {
     return c.json({ message: "title, subject and class are required" }, 400);
+  }
+  const minutes = parseInt_(duration, "duration", {
+    min: MIN_DURATION,
+    max: MAX_DURATION,
+    fallback: 60,
+  });
+  const due = dueOrDefault(dueDate);
+
+  const [subjectRow, classRow] = await Promise.all([
+    c.env.DB.prepare("SELECT id FROM subjects WHERE id = ?").bind(subject).first(),
+    c.env.DB.prepare("SELECT id FROM classes WHERE id = ?").bind(classId).first(),
+  ]);
+  if (!subjectRow) return c.json({ message: "Subject not found" }, 404);
+  if (!classRow) return c.json({ message: "Class not found" }, 404);
+
+  const raw = Array.isArray(questions) ? questions : [];
+  if (raw.length > MAX_QUESTIONS) {
+    throw new BadRequest(`An exam can have at most ${MAX_QUESTIONS} questions`);
   }
 
   const ts = now();
   const examId = newId();
-  const withIds = (Array.isArray(questions) ? questions : []).map((q: any) => ({
-    _id: q._id ?? newId(),
-    questionText: String(q.questionText ?? ""),
-    type: q.type === "SHORT_ANSWER" ? "SHORT_ANSWER" : "MCQ",
-    options: Array.isArray(q.options) ? q.options.map(String) : [],
-    correctAnswer: String(q.correctAnswer ?? ""),
-    points: Number(q.points) || 1,
-  }));
+  const withIds = raw.map(normaliseQuestion);
 
   await c.env.DB.prepare(
     `INSERT INTO exams (id, title, subject, class, teacher, duration, dueDate, isActive, questions, status, createdAt, updatedAt)
@@ -95,10 +190,8 @@ exams.post("/", protect, authorize(["teacher", "admin"]), async (c) => {
       subject,
       classId,
       c.get("user")._id,
-      Number(duration) || 60,
-      dueDate
-        ? new Date(dueDate).toISOString()
-        : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      minutes,
+      due,
       isActive === false ? 0 : 1,
       JSON.stringify(withIds),
       ts,
@@ -154,9 +247,22 @@ exams.get("/:id/result", protect, async (c) => {
   const examId = c.req.param("id");
   const user = c.get("user");
   // Teachers/admins can pull a specific student's result; students get their own.
-  const studentId = canSeeAnswers(user.role)
-    ? (new URL(c.req.url).searchParams.get("student") ?? user._id)
-    : user._id;
+  const requested = new URL(c.req.url).searchParams.get("student");
+  let studentId = user._id;
+  if (requested && requested !== user._id) {
+    // Every other staff route on an exam checks ownership; this one did not, so
+    // any teacher could read any student's paper on any colleague's exam.
+    if (!isStaff(user.role)) {
+      return c.json({ message: "Not authorized to view this result" }, 403);
+    }
+    const owner = await c.env.DB.prepare("SELECT teacher FROM exams WHERE id = ?")
+      .bind(examId)
+      .first();
+    if (user.role !== "admin" && owner && owner.teacher !== user._id) {
+      return c.json({ message: "Not authorized to view this result" }, 403);
+    }
+    studentId = requested;
+  }
 
   const row = await c.env.DB.prepare(
     "SELECT * FROM submissions WHERE exam = ? AND student = ?",
@@ -196,7 +302,7 @@ exams.post("/:id/submit", protect, authorize(["student", "admin"]), async (c) =>
     const result = await gradeSubmission(
       c.env,
       { examId: c.req.param("id"), studentId: user._id, answers },
-      { role: user.role, studentClass: user.studentClass },
+      { role: user.role, studentClass: user.studentClass, graceMs: SUBMIT_GRACE_MS },
     );
     await logActivity(c.env, { userId: user._id, action: "User submitted an exam" });
     return c.json(
@@ -311,6 +417,7 @@ exams.delete("/:id", protect, authorize(["teacher", "admin"]), async (c) => {
 
   await c.env.DB.batch([
     c.env.DB.prepare("DELETE FROM submissions WHERE exam = ?").bind(id),
+    c.env.DB.prepare("DELETE FROM exam_attempts WHERE exam = ?").bind(id),
     c.env.DB.prepare("DELETE FROM exams WHERE id = ?").bind(id),
   ]);
   await logActivity(c.env, { userId: user._id, action: `Deleted exam: ${row.title}` });
@@ -326,11 +433,34 @@ exams.get("/:id", protect, async (c) => {
     .first();
   if (!row) return c.json({ message: "Exam not found" }, 404);
 
-  if (user.role === "student" && row.class !== user.studentClass) {
-    return c.json({ message: "You are not authorized to view this exam." }, 403);
+  if (!isStaff(user.role)) {
+    if (row.class !== user.studentClass) {
+      return c.json({ message: "You are not authorized to view this exam." }, 403);
+    }
+    // The list endpoint filters `isActive = 1`; this one only checked the class,
+    // so a student who knew an id could read an unpublished paper — including
+    // one still being drafted for them.
+    if (row.isActive !== 1) {
+      return c.json({ message: "This exam is not open yet." }, 403);
+    }
   }
 
   const exam = examOut(row, { answers: canSeeAnswers(user.role) });
+
+  // Opening the paper is what starts the clock. Staff previewing it are not
+  // sitting it, so they never create an attempt.
+  let attempt: ReturnType<typeof attemptWindow> | null = null;
+  if (user.role === "student") {
+    const already = await c.env.DB.prepare(
+      "SELECT id FROM submissions WHERE exam = ? AND student = ?",
+    )
+      .bind(row.id, user._id)
+      .first();
+    if (!already) {
+      const startedAt = await startAttempt(c.env.DB, String(row.id), user._id);
+      attempt = attemptWindow(startedAt, Number(row.duration) || 60);
+    }
+  }
   const [subjectMap, classMap, teacherMap] = await Promise.all([
     lookup(c.env.DB, "subjects", [exam.subject], ["name", "code"]),
     lookup(c.env.DB, "classes", [exam.class], ["name"]),
@@ -342,6 +472,7 @@ exams.get("/:id", protect, async (c) => {
     subject: populated(subjectMap, exam.subject),
     class: populated(classMap, exam.class),
     teacher: populated(teacherMap, exam.teacher),
+    attempt,
   });
 });
 

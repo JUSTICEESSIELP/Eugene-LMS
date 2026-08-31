@@ -22,19 +22,34 @@ const Timetable = () => {
   const fetchTimetable = async (classId: string) => {
     if (!classId) return;
 
+    // `setLoadingSchedule` was only ever called with `false`, so the grid's
+    // "Loading schedule..." state was unreachable and the user saw "No
+    // Timetable Generated" — a wrong answer — while the request was in flight.
+    setLoadingSchedule(true);
     try {
       const { data } = await api.get(`/timetables/${classId}`);
       setScheduleData(data.schedule || []);
+      return true;
     } catch (error: any) {
-      if (error.response && error.response.status === 404) {
+      const status = error.response?.status;
+      const payload = error.response?.data;
+      if (status === 404) {
         setScheduleData([]);
+        // The API answers 404 for three different things: no timetable, one
+        // still generating, and one that failed. Only the first is "nothing to
+        // see"; the other two were being reported as success.
+        if (payload?.status === "failed") {
+          toast.error(payload.message || "Timetable generation failed");
+          return true;
+        }
+        if (payload?.status === "pending") return false;
         if (!isAdmin) {
-          // Only show toast if user isn't admin (admins expect empty on new classes)
           toast("No schedule found for this class", { icon: "📅" });
         }
-      } else {
-        toast.error("Failed to load timetable");
+        return true;
       }
+      toast.error("Failed to load timetable");
+      return true;
     } finally {
       setLoadingSchedule(false);
     }
@@ -62,13 +77,28 @@ const Timetable = () => {
       });
 
       toast.success(data.message || "AI Generation Started");
+      setScheduleData([]);
 
-      // Poll for updates (simple version)
-      setTimeout(() => {
-        fetchTimetable(selectedClass);
-        setIsGenerating(false);
-        toast.success("Schedule refreshed!");
-      }, 5000);
+      // Generation runs after the response, so poll until the row leaves
+      // `pending`. The old version fired once after 5s and announced
+      // "Schedule refreshed!" unconditionally — including when the job had
+      // failed and the grid still read "No Timetable Generated".
+      let attempts = 0;
+      const poll = async () => {
+        attempts += 1;
+        const settled = await fetchTimetable(selectedClass);
+        if (settled || attempts >= 12) {
+          setIsGenerating(false);
+          if (!settled) {
+            toast.error(
+              "The timetable is still generating. Reselect the class in a moment to check.",
+            );
+          }
+          return;
+        }
+        setTimeout(poll, 5000);
+      };
+      setTimeout(poll, 5000);
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Generation failed");
       setIsGenerating(false);

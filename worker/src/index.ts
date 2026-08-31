@@ -4,6 +4,7 @@ import { logger } from "hono/logger";
 import { secureHeaders } from "hono/secure-headers";
 import type { AppEnv } from "./types";
 import { aiProvider } from "./lib/ai";
+import { BadRequest } from "./lib/validate";
 import users from "./routes/users";
 import activities from "./routes/activities";
 import academicYears from "./routes/academicYears";
@@ -28,11 +29,17 @@ app.use(
 
 // The API and the SPA share an origin in production, so CORS is only needed
 // for `vite dev` on :5173 talking to a deployed or local Worker.
+//
+// This callback used to read `test(origin) ? origin : origin` — both branches
+// returned the origin, so the check was a no-op and *every* site on the
+// internet was handed `Access-Control-Allow-Origin: <itself>` alongside
+// `Allow-Credentials: true`. `SameSite=Lax` on the cookie is what kept that
+// from being exploitable; the header should not have been depending on it.
 app.use(
   "/api/*",
   cors({
     origin: (origin) =>
-      /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin ?? "") ? origin : origin,
+      /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin ?? "") ? origin : "",
     credentials: true,
     allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowHeaders: ["Content-Type", "Authorization"],
@@ -71,8 +78,15 @@ app.notFound((c) =>
 );
 
 app.onError((err, c) => {
+  // Input the handlers rejected on purpose: a named 400, not a 500.
+  if (err instanceof BadRequest) {
+    return c.json({ message: err.message }, 400);
+  }
   console.error("Unhandled error:", err);
-  return c.json({ message: err.message || "Server Error" }, 500);
+  // `err.message` used to be echoed to the client, which turned a failed
+  // constraint into a response carrying the table definition — e.g.
+  // "D1_ERROR: CHECK constraint failed: role IN (...)". Log it, don't ship it.
+  return c.json({ message: "Server Error" }, 500);
 });
 
 export default app;

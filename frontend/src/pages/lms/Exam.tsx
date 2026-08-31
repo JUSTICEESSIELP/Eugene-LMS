@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router";
 import { toast } from "sonner";
 import {
@@ -20,6 +20,18 @@ import type { exam, Submission } from "@/types";
 import ExamRadio from "@/components/lms/ExamRadio";
 import ExamResults from "@/components/lms/ExamResults";
 
+/** mm:ss, or h:mm:ss for the long papers. */
+const formatRemaining = (ms: number) => {
+  const total = Math.max(0, Math.floor(ms / 1000));
+  const hours = Math.floor(total / 3600);
+  const minutes = Math.floor((total % 3600) / 60);
+  const seconds = total % 60;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return hours > 0
+    ? `${hours}:${pad(minutes)}:${pad(seconds)}`
+    : `${pad(minutes)}:${pad(seconds)}`;
+};
+
 const Exam = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -33,7 +45,15 @@ const Exam = () => {
   // Student Answers State: { [questionId]: "Selected Option" }
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [submission, setSubmission] = useState<Submission | null>(null);
-  const totalPoints = submission && exam ? exam.questions.length : 0;
+  // Milliseconds left in this student's window, from the server's clock.
+  const [remainingMs, setRemainingMs] = useState<number | null>(null);
+
+  // This was `exam.questions.length` — the question *count*, not the points
+  // total. On a 5-question paper worth 10 points, an 8-point score rendered as
+  // "8 / 5" and "160%". The API returns the real total on the submission.
+  const totalPoints =
+    submission?.totalPoints ??
+    (exam ? exam.questions.reduce((sum, q) => sum + (Number(q.points) || 1), 0) : 0);
   const percentage =
     submission && totalPoints > 0
       ? Math.round((submission.score / totalPoints) * 100)
@@ -50,6 +70,10 @@ const Exam = () => {
     try {
       const { data } = await api.get(`/exams/${id}`);
       setExam(data);
+      // The server starts the clock when the paper is first opened and tells us
+      // how long is left. We never compute the deadline locally — a client-side
+      // timer is a display, not a control.
+      setRemainingMs(data.attempt ? data.attempt.remainingMs : null);
 
       if (isStudent) {
         try {
@@ -71,6 +95,73 @@ const Exam = () => {
   useEffect(() => {
     if (id) fetch();
   }, [id, navigate]);
+
+  // Everything above this line is a hook, and every early return is below
+  // it. Defining these after the `loading` / `!exam` returns changed the
+  // number of hooks between renders and crashed the page with React #310
+  // ("rendered more hooks than during the previous render").
+  const handleStudentSubmit = useCallback(
+    async ({ auto = false }: { auto?: boolean } = {}) => {
+    if (!exam) return;
+
+    // Time-up submits whatever is on the page: an unanswered question is worth
+    // nothing either way, and refusing the submit would cost the student the
+    // answers they did give.
+    if (!auto && Object.keys(answers).length < exam.questions.length) {
+      toast.error("Please answer all questions before submitting.");
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      // Transform answers map to array for backend
+      const payload = Object.entries(answers).map(([qId, ans]) => ({
+        questionId: qId,
+        answer: ans,
+      }));
+
+      const { data } = await api.post(`/exams/${id}/submit`, {
+        answers: payload,
+      });
+      toast.success(
+        auto
+          ? `Time's up — your answers were submitted. Score: ${data.score}`
+          : `Exam submitted! Score: ${data.score}`,
+      );
+      navigate("/lms/exams");
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Submission failed");
+    } finally {
+      setSubmitting(false);
+    }
+  },
+    [exam, answers, id, navigate],
+  );
+
+  // Tick the countdown. `submittedRef` stops a re-render or a second tick from
+  // firing the auto-submit twice.
+  const submittedRef = useRef(false);
+  useEffect(() => {
+    if (remainingMs === null || submission) return;
+
+    const deadline = Date.now() + remainingMs;
+    const tick = () => {
+      const left = deadline - Date.now();
+      setRemainingMs(left > 0 ? left : 0);
+      if (left <= 0 && !submittedRef.current) {
+        submittedRef.current = true;
+        // The server refuses a late submission regardless; this is what stops
+        // the student losing the answers they already typed.
+        void handleStudentSubmit({ auto: true });
+      }
+    };
+    const timer = setInterval(tick, 1000);
+    return () => clearInterval(timer);
+    // `remainingMs` is deliberately not a dependency: re-running on every tick
+    // would restart the interval each second.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [submission, handleStudentSubmit, remainingMs === null]);
+
 
   if (loading) {
     return (
@@ -115,34 +206,6 @@ const Exam = () => {
     }
   };
 
-  const handleStudentSubmit = async () => {
-    if (!exam) return;
-
-    // Validate if all questions answered (Optional)
-    if (Object.keys(answers).length < exam.questions.length) {
-      toast.error("Please answer all questions before submitting.");
-      return;
-    }
-
-    try {
-      setSubmitting(true);
-      // Transform answers map to array for backend
-      const payload = Object.entries(answers).map(([qId, ans]) => ({
-        questionId: qId,
-        answer: ans,
-      }));
-
-      const { data } = await api.post(`/exams/${id}/submit`, {
-        answers: payload,
-      });
-      toast.success(`Exam submitted! Score: ${data.score}`);
-      navigate("/lms/exams");
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || "Submission failed");
-    } finally {
-      setSubmitting(false);
-    }
-  };
 
   const handleToggleStatus = async () => {
     try {
@@ -163,10 +226,18 @@ const Exam = () => {
             {exam.isActive ? "Active" : "Draft"}
           </Badge>
         </div>
-        <div className="flex gap-4 text-muted-foreground text-sm">
+        <div className="flex gap-4 text-muted-foreground text-sm items-center">
           <div className="flex items-center gap-1">
             <Clock className="h-4 w-4" /> {exam.duration} Minutes
           </div>
+          {remainingMs !== null && !submission && (
+            <Badge
+              variant={remainingMs <= 60_000 ? "destructive" : "secondary"}
+              className="font-mono tabular-nums"
+            >
+              {formatRemaining(remainingMs)} left
+            </Badge>
+          )}
           <div className="flex items-center gap-1">
             <Calendar className="h-4 w-4" /> Due:{" "}
             {new Date(exam.dueDate).toLocaleDateString()}
@@ -299,7 +370,7 @@ const Exam = () => {
           <Button
             size="lg"
             className="w-full md:w-auto min-w-50"
-            onClick={handleStudentSubmit}
+            onClick={() => handleStudentSubmit()}
             disabled={submitting}
           >
             {submitting ? (

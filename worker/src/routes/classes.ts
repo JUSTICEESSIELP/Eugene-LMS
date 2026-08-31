@@ -4,6 +4,7 @@ import { authorize, protect } from "../lib/auth";
 import { countReferences, logActivity, lookup, meta, paginate, populated } from "../lib/db";
 import { newId, now } from "../lib/ids";
 import { classOut } from "../lib/rows";
+import { parseInt_, parseString } from "../lib/validate";
 
 const classes = new Hono<AppEnv>();
 
@@ -44,10 +45,19 @@ classes.get("/", protect, authorize(["admin"]), async (c) => {
 // POST /api/classes/create — Private/Admin
 classes.post("/create", protect, authorize(["admin"]), async (c) => {
   const body = await c.req.json<any>().catch(() => ({}));
-  const { name, academicYear, classTeacher, capacity, subjects, students } = body;
-  if (!name || !academicYear) {
+  const { academicYear, classTeacher, capacity, subjects, students } = body;
+  if (!body.name || !academicYear) {
     return c.json({ message: "name and academicYear are required" }, 400);
   }
+  const name = parseString(body.name, "name", { max: 120 });
+  const size = parseInt_(capacity, "capacity", { min: 1, max: 1000, fallback: 40 });
+
+  // Nothing enforced this, so a class could point at an academic year that does
+  // not exist and the UI would render a raw hex id where the year should be.
+  const yearRow = await c.env.DB.prepare("SELECT id FROM academic_years WHERE id = ?")
+    .bind(academicYear)
+    .first();
+  if (!yearRow) return c.json({ message: "Academic year not found" }, 404);
 
   const exists = await c.env.DB.prepare(
     "SELECT id FROM classes WHERE name = ? AND academicYear = ?",
@@ -74,7 +84,7 @@ classes.post("/create", protect, authorize(["admin"]), async (c) => {
       classTeacher || null,
       JSON.stringify(Array.isArray(subjects) ? subjects : []),
       JSON.stringify(Array.isArray(students) ? students : []),
-      Number(capacity) || 40,
+      size,
       ts,
       ts,
     )
@@ -103,7 +113,10 @@ classes.on(["PUT", "PATCH"], "/update/:id", protect, authorize(["admin"]), async
     body.classTeacher !== undefined ? body.classTeacher || null : row.classTeacher;
   const subjects = Array.isArray(body.subjects) ? JSON.stringify(body.subjects) : row.subjects;
   const students = Array.isArray(body.students) ? JSON.stringify(body.students) : row.students;
-  const capacity = body.capacity !== undefined ? Number(body.capacity) : row.capacity;
+  const capacity =
+    body.capacity !== undefined
+      ? parseInt_(body.capacity, "capacity", { min: 1, max: 1000 })
+      : row.capacity;
 
   // The unique index is (name, academicYear) — check before we hit it.
   if (name !== row.name || academicYear !== row.academicYear) {

@@ -9,8 +9,11 @@ import CustomAlert from "@/components/global/CustomAlert";
 import type { pagination, subject } from "@/types";
 import { SubjectTable } from "@/components/subjects/SubjectTable";
 import { SubjectForm } from "@/components/subjects/SubjectForm";
+import { useAuth } from "@/hooks/AuthProvider";
 
 export const Subjects = () => {
+  const { user } = useAuth();
+  const canManage = user?.role === "admin";
   const [subjects, setSubjects] = useState<subject[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -108,15 +111,21 @@ export const Subjects = () => {
         </div>
         <div className="flex gap-3">
           <Search search={search} setSearch={setSearch} title="Subject" />
-          <Button onClick={handleCreate}>
-            <Plus className="mr-2 h-4 w-4" /> Create Subject
-          </Button>
+          {/* The route is open to teachers so they can *see* the curriculum, but
+              every write on /api/subjects is admin-only. Rendering these to a
+              teacher offered three controls that always came back 403. */}
+          {canManage && (
+            <Button onClick={handleCreate}>
+              <Plus className="mr-2 h-4 w-4" /> Create Subject
+            </Button>
+          )}
         </div>
       </div>
       {/* table */}
       <SubjectTable
         data={subjects}
         loading={loading}
+        canManage={canManage}
         onEdit={handleEdit}
         onDelete={handleDeleteClick}
         page={pageNum}

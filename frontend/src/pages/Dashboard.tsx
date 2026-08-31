@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/AuthProvider";
 import { api } from "@/lib/api";
-import { Link, useNavigate } from "react-router";
+import { useNavigate } from "react-router";
 
 // UI Imports
 import {
@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Calendar, FileText, CheckCircle2 } from "lucide-react";
+import { Calendar, FileText, CheckCircle2, AlertCircle } from "lucide-react";
 
 // Custom Components
 import { AiInsightWidget } from "@/components/dashboard/ai-insight-widget";
@@ -24,6 +24,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [statsData, setStatsData] = useState<any>({});
+  const [loadError, setLoadError] = useState(false);
 
   // 1. Fetch Data Logic
   useEffect(() => {
@@ -34,7 +35,11 @@ export default function Dashboard() {
         const { data } = await api.get("/dashboard/stats");
         setStatsData(data);
       } catch (error) {
+        // A swallowed failure here left every tile falling back to `|| 0`, so an
+        // outage rendered a school with 0 students, 0 teachers and 0 exams —
+        // indistinguishable from a real, empty school.
         console.error("Failed to load dashboard", error);
+        setLoadError(true);
       } finally {
         setLoading(false);
       }
@@ -89,6 +94,19 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {loadError && (
+        <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-4 flex items-start gap-3">
+          <AlertCircle className="h-5 w-5 text-destructive mt-0.5 shrink-0" />
+          <div className="text-sm">
+            <p className="font-medium">These figures could not be loaded.</p>
+            <p className="text-muted-foreground">
+              The numbers below are placeholders, not your school's data. Refresh
+              the page to try again.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* --- TOP ROW: STATS --- */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <DashboardStats role={user?.role || "student"} data={statsData} />
@@ -111,7 +129,7 @@ export default function Dashboard() {
                     Latest updates from the school system.
                   </CardDescription>
                 </div>
-                <Link to="/"></Link>
+
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -126,9 +144,7 @@ export default function Dashboard() {
                           <p className="text-sm font-medium leading-none">
                             {activity}
                           </p>
-                          <p className="text-xs text-muted-foreground">
-                            Just now
-                          </p>
+
                         </div>
                       </div>
                     )

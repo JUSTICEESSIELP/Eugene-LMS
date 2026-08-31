@@ -36,6 +36,34 @@
 
   "observability": { "enabled": true },
 
+  // IP-keyed leaky buckets, applied at the top of each handler before any DB or
+  // email work. `POST /api/applications` is unauthenticated and now triggers an
+  // outbound Resend call, so without this it is a way to make Veya send mail on
+  // demand. Namespace ids are arbitrary but must stay stable.
+  //
+  // 10/min on the application form rather than something tighter: applicants
+  // share IPs. A school open day, a sixth-form common room or a family on one
+  // connection all submit from a single address, and turning legitimate
+  // applicants away is a worse failure than letting someone send ten emails a
+  // minute. Ten is still a hard ceiling on mail-per-minute-per-IP.
+  "ratelimits": [
+    {
+      "name": "RL_APPLY",
+      "namespace_id": "2001",
+      "simple": { "limit": 10, "period": 60 }
+    },
+    {
+      "name": "RL_AUTH",
+      "namespace_id": "2002",
+      "simple": { "limit": 10, "period": 60 }
+    },
+    {
+      "name": "RL_RESET",
+      "namespace_id": "2003",
+      "simple": { "limit": 5, "period": 60 }
+    }
+  ],
+
   // RESEND_API_KEY is a secret (`wrangler secret put`), not a var. The from
   // address must sit on a domain verified in Resend.
   "vars": {

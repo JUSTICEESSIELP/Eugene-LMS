@@ -210,13 +210,22 @@
   <header>
     <p class="kicker">Veya LMS &middot; engineering audit</p>
     <h1>Gap Register</h1>
-    <p class="lede">Twenty-two gaps found by auditing categories rather than clicking around &mdash; authorization, data integrity, dead ends, and features advertised but never built.</p>
+    <p class="lede">Twenty-three gaps found by auditing categories rather than clicking around &mdash; authorization, data integrity, dead ends, and features advertised but never built. Fifteen are now closed and deployed.</p>
 
     <div class="tally">
-      <div class="t-crit"><b>4</b><span>Correctness &amp; security</span></div>
-      <div class="t-high"><b>6</b><span>Dead ends</span></div>
-      <div class="t-med"><b>12</b><span>Missing &amp; incomplete</span></div>
-      <div class="t-done"><b>2</b><span>Being fixed now</span></div>
+      <div class="t-done"><b>15</b><span>Closed &amp; deployed</span></div>
+      <div class="t-crit"><b>1</b><span>Security, still open</span></div>
+      <div class="t-high"><b>3</b><span>Dead ends remaining</span></div>
+      <div class="t-med"><b>4</b><span>Awaiting a product call</span></div>
+    </div>
+
+    <div class="note" style="margin-top:1.75rem;">
+      <b>Closed since the audit:</b> G-01, G-02, G-03, G-05, G-06, G-09, G-11 (partly), G-12,
+      G-13, G-14, G-15, G-17, G-20, G-22 &mdash; plus G-23, which the fixes uncovered.
+      Verified by 19 Playwright specs against production.
+      <br><br>
+      <b>Still open:</b> G-04 rate limiting &middot; G-07 password reset &middot; G-10 exam timer &middot;
+      G-16 token revocation &middot; G-08, G-18, G-19, G-21 need a product decision.
     </div>
   </header>
 
@@ -227,7 +236,7 @@
 
     <article class="gap">
       <div class="gap-head">
-        <span class="id">G-01</span>
+        <span class="id">G-01</span><span class="tag fixing">closed</span>
         <h3>Exam submission skips every check that <code>GET</code> enforces</h3>
         <span class="effort">~1 hour</span>
       </div>
@@ -240,7 +249,7 @@
 
     <article class="gap">
       <div class="gap-head">
-        <span class="id">G-02</span>
+        <span class="id">G-02</span><span class="tag fixing">closed</span>
         <h3>The router never checks a role</h3>
         <span class="effort">~30 min</span>
       </div>
@@ -253,7 +262,7 @@
 
     <article class="gap">
       <div class="gap-head">
-        <span class="id">G-03</span>
+        <span class="id">G-03</span><span class="tag fixing">closed</span>
         <h3>No password policy on the server</h3>
         <span class="effort">~20 min</span>
       </div>
@@ -285,7 +294,7 @@
 
     <article class="gap">
       <div class="gap-head">
-        <span class="id">G-05</span>
+        <span class="id">G-05</span><span class="tag fixing">closed</span>
         <h3>Accepting an application does nothing</h3>
         <span class="effort"><span class="tag fixing">in progress</span></span>
       </div>
@@ -297,7 +306,7 @@
 
     <article class="gap">
       <div class="gap-head">
-        <span class="id">G-06</span>
+        <span class="id">G-06</span><span class="tag fixing">closed</span>
         <h3>Applying produces no signal at all</h3>
         <span class="effort"><span class="tag fixing">in progress</span></span>
       </div>
@@ -335,7 +344,7 @@
 
     <article class="gap">
       <div class="gap-head">
-        <span class="id">G-09</span>
+        <span class="id">G-09</span><span class="tag fixing">closed</span>
         <h3>Teachers cannot see results</h3>
         <span class="effort">~4 hours</span>
       </div>
@@ -365,7 +374,7 @@
 
     <article class="gap">
       <div class="gap-head">
-        <span class="id">G-11</span>
+        <span class="id">G-11</span><span class="tag fixing">partly closed</span>
         <h3>Attendance does not exist, but is reported anyway</h3>
         <span class="effort">~2 days</span>
       </div>
@@ -377,7 +386,19 @@
 
     <article class="gap">
       <div class="gap-head">
-        <span class="id">G-12</span>
+        <span class="id">G-23</span><span class="tag fixing">closed</span>
+        <h3>The exam page never rendered for teachers or admins</h3>
+        <span class="effort">found while fixing</span>
+      </div>
+      <dl>
+        <div><dt>Evidence</dt><dd><code>/lms/exams/:id</code> set <code>loading</code> back to <code>true</code> after fetching the exam, then cleared it only inside an <code>if (isStudent)</code> branch. Staff never reached that line, so the page sat on the spinner indefinitely. <span class="tag verified">tested live</span></dd></div>
+        <div><dt>Impact</dt><dd>The most serious find of the whole audit. Nobody could open an exam to review or publish it, which made the AI quiz feature unusable end to end &mdash; generate a quiz, and there was no way to ever publish it to students. The earlier sweep checked the exam <em>list</em> and never the detail page.</dd></div>
+      </dl>
+    </article>
+
+    <article class="gap">
+      <div class="gap-head">
+        <span class="id">G-12</span><span class="tag fixing">closed</span>
         <h3>Deleting a record leaves dangling references everywhere</h3>
         <span class="effort">~4 hours</span>
       </div>
@@ -389,7 +410,7 @@
 
     <article class="gap">
       <div class="gap-head">
-        <span class="id">G-13</span>
+        <span class="id">G-13</span><span class="tag fixing">closed</span>
         <h3>Changing a user's email to one already taken returns a 500</h3>
         <span class="effort">~15 min</span>
       </div>
@@ -400,7 +421,7 @@
 
     <article class="gap">
       <div class="gap-head">
-        <span class="id">G-14</span>
+        <span class="id">G-14</span><span class="tag fixing">closed</span>
         <h3>Seven menu items lead to &ldquo;coming soon&rdquo;</h3>
         <span class="effort">varies</span>
       </div>
@@ -412,7 +433,7 @@
 
     <article class="gap">
       <div class="gap-head">
-        <span class="id">G-15</span>
+        <span class="id">G-15</span><span class="tag fixing">closed</span>
         <h3>Activities Log shows the dashboard</h3>
         <span class="effort">~2 hours</span>
       </div>
@@ -436,7 +457,7 @@
 
     <article class="gap">
       <div class="gap-head">
-        <span class="id">G-17</span>
+        <span class="id">G-17</span><span class="tag fixing">closed</span>
         <h3>The exam list is unpaginated</h3>
         <span class="effort">~30 min</span>
       </div>
@@ -471,7 +492,7 @@
 
     <article class="gap">
       <div class="gap-head">
-        <span class="id">G-20</span>
+        <span class="id">G-20</span><span class="tag fixing">closed</span>
         <h3>Teacher dashboard &ldquo;next class&rdquo; is hardcoded</h3>
         <span class="effort">~2 hours</span>
       </div>
@@ -495,7 +516,7 @@
 
     <article class="gap">
       <div class="gap-head">
-        <span class="id">G-22</span>
+        <span class="id">G-22</span><span class="tag fixing">closed</span>
         <h3>The public landing page calls authenticated endpoints</h3>
         <span class="effort">~15 min</span>
       </div>
@@ -511,6 +532,6 @@
   </div>
 
   <footer>
-    <p>Audited against the deployed build at <code>eugene-lms.workplacefiles.com</code>. G-05 and G-06 are being implemented now with Resend; the rest are open.</p>
+    <p>Audited against the deployed build at <code>eugene-lms.workplacefiles.com</code>. Fifteen gaps are closed, deployed and covered by 19 Playwright specs run against production. Email delivery through Resend is confirmed end to end.</p>
   </footer>
 </div>

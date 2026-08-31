@@ -1,3 +1,4 @@
+import { Link } from "react-router";
 import {
   ArrowRight,
   Brain,
@@ -87,9 +88,12 @@ const Programs = () => {
                 ))}
               </div>
 
-              <button className="mt-8 flex items-center text-brand font-semibold group-hover:translate-x-2 transition-transform">
-                Learn more <ArrowRight className="ml-2 w-4 h-4" />
-              </button>
+              <Link
+                to={`/apply?program=${encodeURIComponent(program.title)}`}
+                className="mt-8 inline-flex items-center text-brand font-semibold group-hover:translate-x-2 transition-transform"
+              >
+                Apply for this <ArrowRight className="ml-2 w-4 h-4" />
+              </Link>
             </div>
           ))}
         </div>

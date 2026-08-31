@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useForm, Controller, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Link } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import { toast } from "sonner";
 import { ArrowLeft, CheckCircle2, Loader2 } from "lucide-react";
 import Logo from "@/components/global/Logo";
@@ -42,10 +42,17 @@ type FormValues = z.infer<typeof schema>;
 const Apply = () => {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [searchParams] = useSearchParams();
+
+  // The programme cards on the landing page link here with ?program=, so the
+  // choice someone already made is carried over instead of asked again. Only
+  // a programme we actually offer is accepted.
+  const requested = searchParams.get("program") ?? "";
+  const preselected = PROGRAMS.includes(requested) ? requested : "";
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema) as Resolver<FormValues>,
-    defaultValues: { fullName: "", email: "", phone: "", program: "", message: "" },
+    defaultValues: { fullName: "", email: "", phone: "", program: preselected, message: "" },
   });
 
   const onSubmit = async (values: FormValues) => {

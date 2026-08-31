@@ -6,7 +6,6 @@ import {
   GraduationCap,
   Users,
   LayoutDashboard,
-  Banknote,
   ClipboardList,
   type LucideIcon,
   LogOut,
@@ -84,7 +83,7 @@ export const sidebardata = {
         {
           title: "Classes",
           url: "/classes",
-          roles: ["admin", "teacher"],
+          roles: ["admin"], // The API allows only admins to read classes.
         },
         {
           title: "Subjects",
@@ -96,11 +95,8 @@ export const sidebardata = {
           url: "/timetable",
           // Everyone needs to see the schedule
         },
-        {
-          title: "Attendance",
-          url: "/attendance",
-          // Parents want to see if their kid was present
-        },
+        // Not built yet — no Attendance model exists. Restore when it does.
+        // { title: "Attendance", url: "/attendance" },
       ],
     },
     {
@@ -109,9 +105,8 @@ export const sidebardata = {
       icon: GraduationCap,
       roles: ["teacher", "student", "admin"], // Parents usually don't need deep LMS access
       items: [
-        { title: "Assignments", url: "/lms/assignments" },
+        // Not built yet: Assignments, Study Materials.
         { title: "Exams", url: "/lms/exams" },
-        { title: "Study Materials", url: "/lms/materials" },
       ],
     },
     {
@@ -145,26 +140,15 @@ export const sidebardata = {
       roles: ["admin"],
       items: [{ title: "Applications", url: "/admissions", roles: ["admin"] }],
     },
-    {
-      title: "Finance",
-      url: "#",
-      icon: Banknote,
-      roles: ["admin"],
-      items: [
-        { title: "Fee Collection", url: "/finance/fees" },
-        { title: "Expenses", url: "/finance/expenses" },
-        { title: "Salary", url: "/finance/salary" },
-      ],
-    },
+    // Finance is entirely unbuilt — no models, no endpoints, no pages.
     {
       title: "System",
       url: "#",
       icon: Settings2,
       roles: ["admin"],
       items: [
-        { title: "School Settings", url: "/settings/general" }, // Added to match router
+        // Not built yet: School Settings, Roles & Permissions.
         { title: "Academic Years", url: "/settings/academic-years" },
-        { title: "Roles & Permissions", url: "/settings/roles" },
       ],
     },
   ] as NavItem[],

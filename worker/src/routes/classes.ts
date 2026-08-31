@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import type { AppEnv } from "../types";
 import { authorize, protect } from "../lib/auth";
-import { logActivity, lookup, meta, paginate, populated } from "../lib/db";
+import { countReferences, logActivity, lookup, meta, paginate, populated } from "../lib/db";
 import { newId, now } from "../lib/ids";
 import { classOut } from "../lib/rows";
 
@@ -143,7 +143,26 @@ classes.delete("/delete/:id", protect, authorize(["admin"]), async (c) => {
   const row = await c.env.DB.prepare("SELECT * FROM classes WHERE id = ?").bind(id).first();
   if (!row) return c.json({ message: "Class not found" }, 404);
 
-  await c.env.DB.prepare("DELETE FROM classes WHERE id = ?").bind(id).run();
+  const examCount = await countReferences(c.env.DB, "exams", "class", id);
+  if (examCount > 0) {
+    return c.json(
+      {
+        message: `This class has ${examCount} exam${examCount === 1 ? "" : "s"}. Delete them first.`,
+      },
+      409,
+    );
+  }
+
+  // Students would otherwise keep pointing at a class that no longer exists,
+  // which silently hides every exam from them.
+  await c.env.DB.batch([
+    c.env.DB.prepare(
+      "UPDATE users SET studentClass = NULL, updatedAt = ? WHERE studentClass = ?",
+    ).bind(now(), id),
+    c.env.DB.prepare("DELETE FROM timetables WHERE class = ?").bind(id),
+    c.env.DB.prepare("DELETE FROM classes WHERE id = ?").bind(id),
+  ]);
+
   await logActivity(c.env, {
     userId: c.get("user")._id,
     action: `Deleted class: ${row.name}`,

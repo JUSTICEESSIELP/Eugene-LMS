@@ -2,7 +2,6 @@ import { createContext, useState, useEffect, useContext } from "react";
 import { api } from "@/lib/api";
 import type { academicYear, user } from "@/types";
 
-// 1. Create Context
 const AuthContext = createContext<{
   user: user | null;
   setUser: React.Dispatch<React.SetStateAction<user | null>>;
@@ -17,35 +16,54 @@ const AuthContext = createContext<{
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<user | null>(null);
-  const [loading, setLoading] = useState(true); // <--- Vital for preventing "flicker"
+  const [loading, setLoading] = useState(true); // Prevents a flash of signed-out UI.
   const [year, setYear] = useState<academicYear | null>(null);
 
   useEffect(() => {
-    const checkAuth = async () => {
+    // Guards against setting state after unmount, and against React 18's
+    // double-invoked effects in development racing each other.
+    let cancelled = false;
+
+    const bootstrap = async () => {
+      let signedIn: user | null = null;
+
       try {
-        setLoading(true);
         const { data } = await api.get("/users/profile");
-        setUser(data.user);
-      } catch (error) {
-        console.log(error);
-        setLoading(false);
-        setUser(null);
+        signedIn = data.user ?? null;
+      } catch {
+        // A 401 here is the normal answer for a signed-out visitor, not an
+        // error worth logging — the landing page is mostly signed-out traffic.
+        signedIn = null;
       }
-    };
-    const fetchYear = async () => {
-      try {
-        const { data } = await api.get("/academic-years/current");
-        setYear(data);
-        setLoading(false);
-      } catch (error) {
-        console.log(error);
-        setLoading(false);
+
+      if (cancelled) return;
+      setUser(signedIn);
+
+      // The current academic year is behind auth, so asking for it while
+      // signed out only produced a second 401. It is also only ever used by
+      // the signed-in shell.
+      if (signedIn) {
+        try {
+          const { data } = await api.get("/academic-years/current");
+          if (!cancelled) setYear(data);
+        } catch {
+          // No year configured yet is a legitimate state: PrivateRoutes sends
+          // an admin to the settings page to create one.
+          if (!cancelled) setYear(null);
+        }
+      } else if (!cancelled) {
         setYear(null);
       }
+
+      // Previously only the academic-year request cleared this, so a slow or
+      // failed year lookup left the whole app rendering nothing.
+      if (!cancelled) setLoading(false);
     };
 
-    checkAuth();
-    fetchYear();
+    bootstrap();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return (

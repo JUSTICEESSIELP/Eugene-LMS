@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import type { AppEnv } from "../types";
 import { authorize, protect } from "../lib/auth";
-import { logActivity, meta, paginate } from "../lib/db";
+import { countReferences, logActivity, meta, paginate } from "../lib/db";
 import { newId, now } from "../lib/ids";
 import { academicYearOut } from "../lib/rows";
 
@@ -133,7 +133,20 @@ years.delete("/delete/:id", protect, authorize(["admin"]), async (c) => {
     return c.json({ message: "Cannot delete the current academic year" }, 400);
   }
 
-  await c.env.DB.prepare("DELETE FROM academic_years WHERE id = ?").bind(id).run();
+  const classCount = await countReferences(c.env.DB, "classes", "academicYear", id);
+  if (classCount > 0) {
+    return c.json(
+      {
+        message: `${classCount} class${classCount === 1 ? "" : "es"} still belong to this year. Delete them first.`,
+      },
+      409,
+    );
+  }
+
+  await c.env.DB.batch([
+    c.env.DB.prepare("DELETE FROM timetables WHERE academicYear = ?").bind(id),
+    c.env.DB.prepare("DELETE FROM academic_years WHERE id = ?").bind(id),
+  ]);
   await logActivity(c.env, {
     userId: c.get("user")._id,
     action: `Deleted academic year ${row.name}`,

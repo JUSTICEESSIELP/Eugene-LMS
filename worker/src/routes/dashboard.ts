@@ -44,7 +44,7 @@ dashboard.get("/stats", protect, async (c) => {
       totalStudents,
       totalTeachers,
       activeExams,
-      avgAttendance: "94.5%", // Placeholder — there is no Attendance model yet.
+      avgAttendance: null, // No attendance model yet — the UI shows "Not tracked".
       recentActivity,
     });
   }
@@ -62,8 +62,10 @@ dashboard.get("/stats", protect, async (c) => {
     return c.json({
       myClassesCount,
       pendingGrading,
-      nextClass: "Mathematics - Grade 10", // Placeholder, as in the original.
-      nextClassTime: "10:00 AM",
+      // Deriving this needs today's timetable row for the teacher; until that
+      // is wired, say nothing rather than name a class that may not exist.
+      nextClass: null,
+      nextClassTime: null,
       recentActivity,
     });
   }
@@ -82,7 +84,7 @@ dashboard.get("/stats", protect, async (c) => {
       [user.studentClass ?? "", nowIso],
     );
     return c.json({
-      myAttendance: "98%", // Placeholder — no Attendance model.
+      myAttendance: null, // No attendance model yet.
       pendingAssignments,
       nextExam: nextExam?.title ?? "No upcoming exams",
       nextExamDate: nextExam ? new Date(nextExam.dueDate as string).toLocaleDateString() : "",

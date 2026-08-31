@@ -18,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import type { exam, Submission } from "@/types";
 import ExamRadio from "@/components/lms/ExamRadio";
+import ExamResults from "@/components/lms/ExamResults";
 
 const Exam = () => {
   const { id } = useParams();
@@ -38,32 +39,32 @@ const Exam = () => {
       ? Math.round((submission.score / totalPoints) * 100)
       : 0;
 
-  // handle fetch exam details
+  // Fetch the exam, plus this student's own submission if they have one.
+  //
+  // This used to flip `loading` back to true after the exam had loaded and
+  // only clear it again inside the `isStudent` branch — so for a teacher or
+  // admin it never cleared, and the page sat on the spinner forever. Nobody
+  // could open an exam to review or publish it.
   const fetch = async () => {
     setLoading(true);
-    await api
-      .get(`/exams/${id}`)
-      .then((res) => {
-        setExam(res.data);
-        setLoading(false);
-      })
-      .catch(() => {
-        toast.error("Failed to load exam");
-        navigate("/lms/exams");
-        setLoading(false);
-      });
-    setLoading(true);
-    if (isStudent) {
-      await api
-        .get(`/exams/${id}/result`)
-        .then((res) => {
-          setLoading(false);
-          setSubmission(res.data);
-        })
-        .catch(() => {
-          setLoading(false);
+    try {
+      const { data } = await api.get(`/exams/${id}`);
+      setExam(data);
+
+      if (isStudent) {
+        try {
+          const result = await api.get(`/exams/${id}/result`);
+          setSubmission(result.data);
+        } catch {
+          // No submission yet is the normal case, not an error.
           setSubmission(null);
-        });
+        }
+      }
+    } catch {
+      toast.error("Failed to load exam");
+      navigate("/lms/exams");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -80,11 +81,6 @@ const Exam = () => {
   }
 
   if (!exam) {
-    navigate("/lms/exams");
-    return;
-  }
-
-  if (!exam.isActive && !isTeacher) {
     navigate("/lms/exams");
     return;
   }
@@ -198,6 +194,13 @@ const Exam = () => {
                 Delete Exam
               </Button>
             </div>
+          </div>
+          <Separator />
+
+          {/* Results were graded and stored all along; nothing displayed them. */}
+          <div className="space-y-3">
+            <h2 className="display-page text-2xl">Results</h2>
+            {id && <ExamResults examId={id} />}
           </div>
           <Separator />
         </>

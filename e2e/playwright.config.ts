@@ -9,6 +9,9 @@ export default defineConfig({
   timeout: 60_000,
   expect: { timeout: 10_000 },
   fullyParallel: false,
+  // These specs share one app and one database — running them concurrently
+  // makes them race each other, not the app.
+  workers: 1,
   reporter: [["list"]],
   use: {
     baseURL,

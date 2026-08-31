@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import type { AppEnv } from "../types";
 import { authorize, protect } from "../lib/auth";
-import { logActivity, lookup, meta, paginate } from "../lib/db";
+import { countReferences, logActivity, lookup, meta, paginate, pullFromJsonArray } from "../lib/db";
 import { newId, now } from "../lib/ids";
 import { subjectOut } from "../lib/rows";
 
@@ -120,7 +120,22 @@ subjects.delete("/delete/:id", protect, authorize(["admin"]), async (c) => {
   const row = await c.env.DB.prepare("SELECT * FROM subjects WHERE id = ?").bind(id).first();
   if (!row) return c.json({ message: "Subject not found" }, 404);
 
+  // An exam without its subject is unreadable, so block rather than orphan.
+  const examCount = await countReferences(c.env.DB, "exams", "subject", id);
+  if (examCount > 0) {
+    return c.json(
+      {
+        message: `This subject is used by ${examCount} exam${examCount === 1 ? "" : "s"}. Delete or reassign them first.`,
+      },
+      409,
+    );
+  }
+
   await c.env.DB.prepare("DELETE FROM subjects WHERE id = ?").bind(id).run();
+  // Nothing enforces these references, so clean them up by hand.
+  await pullFromJsonArray(c.env.DB, "classes", "subjects", id);
+  await pullFromJsonArray(c.env.DB, "users", "teacherSubject", id);
+
   await logActivity(c.env, {
     userId: c.get("user")._id,
     action: `Deleted subject: ${row.name}`,

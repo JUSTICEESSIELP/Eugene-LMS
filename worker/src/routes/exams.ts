@@ -1,10 +1,10 @@
 import { Hono } from "hono";
 import type { AppEnv } from "../types";
 import { authorize, protect } from "../lib/auth";
-import { logActivity, lookup, populated } from "../lib/db";
+import { logActivity, lookup, paginate, populated } from "../lib/db";
 import { newId, now } from "../lib/ids";
 import { examOut, parseJson, submissionOut } from "../lib/rows";
-import { generateExamJob, gradeSubmission } from "../jobs";
+import { generateExamJob, gradeSubmission, SubmissionNotAllowed } from "../jobs";
 
 const exams = new Hono<AppEnv>();
 
@@ -126,7 +126,11 @@ exams.get("/", protect, authorize(["teacher", "student", "admin"]), async (c) =>
     sql += " WHERE teacher = ?";
     args.push(user._id);
   }
-  sql += " ORDER BY createdAt DESC";
+  // Every other list endpoint is bounded; this one returned a teacher's
+  // entire history, questions included.
+  const { limit, offset } = paginate(new URL(c.req.url), 50);
+  sql += " ORDER BY createdAt DESC LIMIT ? OFFSET ?";
+  args.push(limit, offset);
 
   const { results } = await c.env.DB.prepare(sql).bind(...args).all();
   const rows = (results as any[]).map((r) => examOut(r)); // answers stripped
@@ -189,11 +193,11 @@ exams.post("/:id/submit", protect, authorize(["student", "admin"]), async (c) =>
   const { answers } = await c.req.json<any>().catch(() => ({}));
   const user = c.get("user");
   try {
-    const result = await gradeSubmission(c.env, {
-      examId: c.req.param("id"),
-      studentId: user._id,
-      answers,
-    });
+    const result = await gradeSubmission(
+      c.env,
+      { examId: c.req.param("id"), studentId: user._id, answers },
+      { role: user.role, studentClass: user.studentClass },
+    );
     await logActivity(c.env, { userId: user._id, action: "User submitted an exam" });
     return c.json(
       {
@@ -204,8 +208,10 @@ exams.post("/:id/submit", protect, authorize(["student", "admin"]), async (c) =>
       201,
     );
   } catch (error: any) {
-    const message = error?.message ?? "Submission failed";
-    return c.json({ message }, message === "Exam already submitted" ? 400 : 500);
+    if (error instanceof SubmissionNotAllowed) {
+      return c.json({ message: error.message }, 403);
+    }
+    return c.json({ message: error?.message ?? "Submission failed" }, 500);
   }
 });
 
@@ -229,6 +235,66 @@ exams.patch("/:id/status", protect, authorize(["teacher", "admin"]), async (c) =
     message: `Exam is now ${isActive ? "Active" : "Inactive"}`,
     _id: id,
     isActive: isActive === 1,
+  });
+});
+
+// GET /api/exams/:id/submissions — Private (Teacher & Admin).
+// Submissions were graded and stored from the start, but nothing ever listed
+// them, so marked work was invisible and the dashboard's "pending grading"
+// count led nowhere.
+exams.get("/:id/submissions", protect, authorize(["teacher", "admin"]), async (c) => {
+  const id = c.req.param("id");
+  const user = c.get("user");
+
+  const exam = await c.env.DB.prepare("SELECT * FROM exams WHERE id = ?").bind(id).first();
+  if (!exam) return c.json({ message: "Exam not found" }, 404);
+  if (user.role !== "admin" && exam.teacher !== user._id) {
+    return c.json({ message: "Not authorized to view these results" }, 403);
+  }
+
+  const { results } = await c.env.DB.prepare(
+    "SELECT * FROM submissions WHERE exam = ? ORDER BY score DESC, submittedAt ASC",
+  )
+    .bind(id)
+    .all();
+
+  const rows = (results as any[]).map(submissionOut);
+  const students = await lookup(c.env.DB, "users", rows.map((r) => r.student), [
+    "name",
+    "email",
+  ]);
+
+  // The class roster tells us who has NOT sat it yet, which is the thing a
+  // teacher actually wants to know.
+  const classRow = await c.env.DB.prepare("SELECT students FROM classes WHERE id = ?")
+    .bind(exam.class)
+    .first();
+  const roster = parseJson<string[]>(classRow?.students, []);
+  const submitted = new Set(rows.map((r) => r.student));
+  const outstanding = roster.filter((sid) => !submitted.has(sid));
+  const outstandingStudents = await lookup(c.env.DB, "users", outstanding, ["name", "email"]);
+
+  const totalPoints = parseJson<any[]>(exam.questions, []).reduce(
+    (sum, q) => sum + (Number(q.points) || 1),
+    0,
+  );
+  const scores = rows.map((r) => Number(r.score) || 0);
+
+  return c.json({
+    exam: { _id: exam.id, title: exam.title, totalPoints },
+    submissions: rows.map((r) => ({
+      ...r,
+      student: populated(students, r.student),
+    })),
+    outstanding: outstanding.map((sid) => outstandingStudents.get(sid) ?? sid),
+    stats: {
+      submitted: rows.length,
+      outstanding: outstanding.length,
+      average: scores.length
+        ? Math.round((scores.reduce((a, b) => a + b, 0) / scores.length) * 10) / 10
+        : null,
+      highest: scores.length ? Math.max(...scores) : null,
+    },
   });
 });
 

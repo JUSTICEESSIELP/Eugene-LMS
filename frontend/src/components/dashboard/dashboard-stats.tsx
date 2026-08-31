@@ -51,9 +51,11 @@ export function DashboardStats({ role, data }: StatsProps) {
           </CardHeader>
           <CardContent>
             <div className="display-page text-2xl">
-              {data.avgAttendance || "0%"}
+              {data.avgAttendance ?? "—"}
             </div>
-            <p className="text-xs text-muted-foreground">Today's metrics</p>
+            <p className="text-xs text-muted-foreground">
+              {data.avgAttendance ? "Today's metrics" : "Not tracked yet"}
+            </p>
           </CardContent>
         </Card>
         <Card>
@@ -105,10 +107,10 @@ export function DashboardStats({ role, data }: StatsProps) {
           </CardHeader>
           <CardContent>
             <div className="text-xl font-bold truncate">
-              {data.nextClass || "No classes"}
+              {data.nextClass ?? "—"}
             </div>
             <p className="text-xs text-muted-foreground">
-              {data.nextClassTime || "Enjoy your day!"}
+              {data.nextClass ? data.nextClassTime : "Check your timetable"}
             </p>
           </CardContent>
         </Card>
@@ -125,8 +127,10 @@ export function DashboardStats({ role, data }: StatsProps) {
           <Clock className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="display-page text-2xl">{data.myAttendance || "0%"}</div>
-          <p className="text-xs text-muted-foreground">This semester</p>
+          <div className="display-page text-2xl">{data.myAttendance ?? "—"}</div>
+          <p className="text-xs text-muted-foreground">
+            {data.myAttendance ? "This semester" : "Not tracked yet"}
+          </p>
         </CardContent>
       </Card>
       <Card>

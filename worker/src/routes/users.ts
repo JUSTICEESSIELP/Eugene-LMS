@@ -1,12 +1,16 @@
 import { Hono } from "hono";
 import type { AppEnv, Role } from "../types";
-import { authorize, clearToken, issueToken, protect } from "../lib/auth";
+import { authorize, clearToken, issueToken, optionalAuth, protect } from "../lib/auth";
 import { hashPassword, verifyPassword } from "../lib/password";
 import { logActivity, meta, paginate } from "../lib/db";
 import { newId, now } from "../lib/ids";
 import { userOut } from "../lib/rows";
 
 const users = new Hono<AppEnv>();
+
+// The React forms enforce this, but forms are a convenience — anything talking
+// to the API directly used to get through with a one-character password.
+const MIN_PASSWORD_LENGTH = 8;
 
 // POST /api/users/register — Private (Admin & Teacher)
 users.post("/register", protect, authorize(["admin", "teacher"]), async (c) => {
@@ -15,6 +19,12 @@ users.post("/register", protect, authorize(["admin", "teacher"]), async (c) => {
 
   if (!name || !email || !password) {
     return c.json({ message: "name, email and password are required" }, 400);
+  }
+  if (String(password).length < MIN_PASSWORD_LENGTH) {
+    return c.json(
+      { message: `Password must be at least ${MIN_PASSWORD_LENGTH} characters` },
+      400,
+    );
   }
 
   const existing = await c.env.DB.prepare("SELECT id FROM users WHERE lower(email) = lower(?)")
@@ -79,9 +89,14 @@ users.post("/logout", (c) => {
   return c.json({ message: "Logged out successfully" });
 });
 
-// GET /api/users/profile — Private
-users.get("/profile", protect, (c) => {
+// GET /api/users/profile — answers for signed-out callers too.
+// This is a "who am I" probe the SPA runs on every page load, including the
+// public landing page. Behind `protect` it 401'd for every visitor, so it
+// returns 200 with a null user instead — absence of a session is the answer,
+// not a failure.
+users.get("/profile", optionalAuth, (c) => {
   const user = c.get("user");
+  if (!user) return c.json({ user: null });
   return c.json({
     user: {
       _id: user._id,
@@ -143,6 +158,23 @@ users.put("/update/:id", protect, authorize(["admin", "teacher"]), async (c) => 
   const teacherSubject = Array.isArray(body.teacherSubject)
     ? JSON.stringify(body.teacherSubject)
     : row.teacherSubject;
+  if (body.password && String(body.password).length < MIN_PASSWORD_LENGTH) {
+    return c.json(
+      { message: `Password must be at least ${MIN_PASSWORD_LENGTH} characters` },
+      400,
+    );
+  }
+  if (String(email).toLowerCase() !== String(row.email).toLowerCase()) {
+    const clash = await c.env.DB.prepare(
+      "SELECT id FROM users WHERE lower(email) = lower(?) AND id != ?",
+    )
+      .bind(email, id)
+      .first();
+    if (clash) {
+      return c.json({ message: "Another account already uses that email" }, 400);
+    }
+  }
+
   const password = body.password
     ? await hashPassword(body.password)
     : (row.password as string);

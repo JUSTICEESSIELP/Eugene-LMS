@@ -207,19 +207,43 @@ RULES:
  * Grading ran through Inngest too, to keep it off the request path. It is a
  * handful of string comparisons, so on Workers it just runs inline.
  */
+/** Thrown for a submission the student should not be allowed to make. */
+export class SubmissionNotAllowed extends Error {}
+
 export const gradeSubmission = async (
   env: Env,
-  { examId, studentId, answers }: { examId: string; studentId: string; answers: any[] },
+  {
+    examId,
+    studentId,
+    answers,
+  }: { examId: string; studentId: string; answers: any[] },
+  actor?: { role: string; studentClass: string | null },
 ) => {
   const existing = await env.DB.prepare(
     "SELECT id FROM submissions WHERE exam = ? AND student = ?",
   )
     .bind(examId, studentId)
     .first();
-  if (existing) throw new Error("Exam already submitted");
+  if (existing) throw new SubmissionNotAllowed("Exam already submitted");
 
   const exam = await env.DB.prepare("SELECT * FROM exams WHERE id = ?").bind(examId).first();
   if (!exam) throw new Error(`Exam ${examId} not found`);
+
+  // GET /exams/:id already refuses a student from another class, but this path
+  // used to grade anything it was handed — so a student could post a
+  // submission against another class's paper, an unpublished draft, or an
+  // exam long past due. Same rules, both paths.
+  if (actor && actor.role === "student") {
+    if (exam.class !== actor.studentClass) {
+      throw new SubmissionNotAllowed("This exam is not assigned to your class");
+    }
+    if (exam.isActive !== 1) {
+      throw new SubmissionNotAllowed("This exam is not open for submissions");
+    }
+    if (exam.dueDate && new Date(exam.dueDate as string).getTime() < Date.now()) {
+      throw new SubmissionNotAllowed("The due date for this exam has passed");
+    }
+  }
 
   const questions = parseJson<any[]>(exam.questions, []);
   const given = Array.isArray(answers) ? answers : [];

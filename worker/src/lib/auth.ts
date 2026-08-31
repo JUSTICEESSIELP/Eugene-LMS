@@ -59,6 +59,31 @@ export const protect: MiddlewareHandler<{ Bindings: Env; Variables: { user: Auth
     await next();
   };
 
+/**
+ * Resolves a session when one is present and continues regardless. For
+ * endpoints where "nobody is signed in" is a valid answer rather than an
+ * error — the SPA's profile probe runs on public pages too.
+ */
+export const optionalAuth: MiddlewareHandler<{
+  Bindings: Env;
+  Variables: { user: AuthUser };
+}> = async (c, next) => {
+  const bearer = c.req.header("Authorization")?.replace(/^Bearer\s+/i, "");
+  const token = getCookie(c, "jwt") || bearer;
+  if (token) {
+    try {
+      const payload = (await verify(token, c.env.JWT_SECRET, "HS512")) as { userId: string };
+      const row = await c.env.DB.prepare("SELECT * FROM users WHERE id = ?")
+        .bind(payload.userId)
+        .first();
+      if (row) c.set("user", userOut(row) as AuthUser);
+    } catch {
+      // An expired or forged token is treated the same as no token here.
+    }
+  }
+  await next();
+};
+
 /** Mirrors the old Express `authorize([...roles])` middleware. */
 export const authorize =
   (roles: Role[]): MiddlewareHandler<{ Bindings: Env; Variables: { user: AuthUser } }> =>

@@ -70,3 +70,54 @@ export const meta = (total: number, page: number, limit: number) => ({
   pages: Math.ceil(total / limit) || 0,
   limit,
 });
+
+/**
+ * Relations are JSON arrays in TEXT columns with no foreign keys, so deleting
+ * a row leaves its id stranded inside every array that referenced it. The
+ * populated lookups then fall back to the raw id and the UI renders a hex
+ * string where a name should be. These helpers do the cleanup by hand.
+ */
+export const pullFromJsonArray = async (
+  db: D1Database,
+  table: string,
+  column: string,
+  id: string,
+) => {
+  // Narrow with LIKE first so we only parse rows that can possibly match.
+  const { results } = await db
+    .prepare(`SELECT id, ${column} AS arr FROM ${table} WHERE ${column} LIKE ?`)
+    .bind(`%${id}%`)
+    .all();
+
+  const stmts = [];
+  for (const row of results as Record<string, any>[]) {
+    let list: string[];
+    try {
+      list = JSON.parse(row.arr ?? "[]");
+    } catch {
+      continue;
+    }
+    if (!Array.isArray(list) || !list.includes(id)) continue;
+    stmts.push(
+      db
+        .prepare(`UPDATE ${table} SET ${column} = ?, updatedAt = ? WHERE id = ?`)
+        .bind(JSON.stringify(list.filter((x) => x !== id)), now(), row.id),
+    );
+  }
+  if (stmts.length) await db.batch(stmts);
+  return stmts.length;
+};
+
+/** Count rows pointing at an id, for refusing a delete that would orphan data. */
+export const countReferences = async (
+  db: D1Database,
+  table: string,
+  column: string,
+  id: string,
+): Promise<number> => {
+  const row = await db
+    .prepare(`SELECT COUNT(*) AS total FROM ${table} WHERE ${column} = ?`)
+    .bind(id)
+    .first();
+  return Number(row?.total ?? 0);
+};

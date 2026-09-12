@@ -16,7 +16,10 @@ type EmailEnv = {
 
 export type SendResult = { delivered: boolean; via: "resend" | "log" };
 
-const DEFAULT_FROM = "Veya <noreply@mail.offgridlabs.org>";
+const DEFAULT_FROM = "Knowledge Tree International Institute <noreply@mail.offgridlabs.org>";
+
+/** The institution's name as it appears in copy. */
+const BRAND = "Knowledge Tree International Institute";
 
 /** Where the emails point people. The Worker's custom domain. */
 const SITE_URL = "https://eugene-lms.workplacefiles.com";
@@ -82,7 +85,7 @@ export async function sendApplicationReceivedEmail(
   return send(
     env,
     args.to,
-    "We've got your Veya application",
+    "We've got your Knowledge Tree application",
     renderReceivedHtml(args),
     renderReceivedText(args),
   );
@@ -100,7 +103,7 @@ export async function sendApplicationAcceptedEmail(
   return send(
     env,
     args.to,
-    `You're in — welcome to Veya`,
+    `You're in — welcome to Knowledge Tree International Institute`,
     renderAcceptedHtml(args),
     renderAcceptedText(args),
   );
@@ -120,7 +123,7 @@ export async function sendPasswordResetEmail(
   return send(
     env,
     args.to,
-    "Reset your Veya password",
+    "Reset your Knowledge Tree password",
     renderResetHtml(args),
     renderResetText(args),
   );
@@ -134,7 +137,7 @@ export async function sendApplicationRejectedEmail(
   return send(
     env,
     args.to,
-    "About your Veya application",
+    "About your Knowledge Tree application",
     renderRejectedHtml(args),
     renderRejectedText(args),
   );
@@ -154,13 +157,14 @@ const shell = (inner: string) => `<!doctype html>
 <html>
   <body style="margin:0;padding:0;background:${CREAM};font-family:Arial,Helvetica,sans-serif;color:${INK};">
     <div style="max-width:560px;margin:40px auto;padding:32px;background:#ffffff;border:1px solid rgba(28,26,25,0.08);border-radius:16px;">
-      <a href="${SITE_URL}" style="display:inline-block;text-decoration:none;font-weight:bold;font-size:22px;letter-spacing:0.14em;text-transform:uppercase;color:${INDIGO};">
-        Veya
+      <a href="${SITE_URL}" style="display:inline-block;text-decoration:none;">
+        <img src="${SITE_URL}/brand/kti-logo.png" alt="${BRAND}" width="222" height="44"
+             style="display:block;height:44px;width:222px;border:0;outline:none;text-decoration:none;" />
       </a>
       ${inner}
       <hr style="border:none;border-top:1px solid rgba(28,26,25,.08);margin:32px 0 16px;" />
       <p style="font-size:12px;color:rgba(28,26,25,.55);margin:0;">
-        Veya Admissions · <a href="${SITE_URL}" style="color:${INDIGO};text-decoration:none;">eugene-lms.workplacefiles.com</a>
+        Knowledge Tree Admissions · <a href="${SITE_URL}" style="color:${INDIGO};text-decoration:none;">eugene-lms.workplacefiles.com</a>
       </p>
     </div>
   </body>
@@ -177,15 +181,15 @@ const button = (href: string, label: string) =>
 
 function renderReceivedText(args: { fullName: string; program: string }): string {
   return [
-    "Veya — your application is in",
+    "Knowledge Tree International Institute — your application is in",
     "",
     `Hi ${firstName(args.fullName)},`,
     "",
-    `Thanks for applying to ${args.program} at Veya. Your application has been received and is now with our admissions team.`,
+    `Thanks for applying to ${args.program} at Knowledge Tree International Institute. Your application has been received and is now with our admissions team.`,
     "",
     "We review applications in the order they arrive, and you'll hear from us by email either way — there's nothing you need to do in the meantime.",
     "",
-    "Veya Admissions",
+    "Knowledge Tree Admissions",
     SITE_URL,
   ].join("\n");
 }
@@ -195,7 +199,7 @@ function renderReceivedHtml(args: { fullName: string; program: string }): string
     h1("Your application is in.") +
       p(`Hi ${esc(firstName(args.fullName))},`) +
       p(
-        `Thanks for applying to <strong>${esc(args.program)}</strong> at Veya. Your application has been received and is now with our admissions team.`,
+        `Thanks for applying to <strong>${esc(args.program)}</strong> at Knowledge Tree International Institute. Your application has been received and is now with our admissions team.`,
       ) +
       p(
         "We review applications in the order they arrive, and you'll hear from us by email either way. There's nothing you need to do in the meantime.",
@@ -210,11 +214,11 @@ function renderAcceptedText(args: {
   to: string;
 }): string {
   const lines = [
-    "Veya — you're in",
+    "Knowledge Tree International Institute — you're in",
     "",
     `Hi ${firstName(args.fullName)},`,
     "",
-    `You've been accepted onto ${args.program} at Veya. Congratulations.`,
+    `You've been accepted onto ${args.program} at Knowledge Tree International Institute. Congratulations.`,
     "",
   ];
   if (args.temporaryPassword) {
@@ -229,7 +233,7 @@ function renderAcceptedText(args: {
   } else {
     lines.push("Your student account is ready. Sign in with this email address and your usual password.");
   }
-  lines.push("", `${SITE_URL}/login`, "", "Veya Admissions");
+  lines.push("", `${SITE_URL}/login`, "", "Knowledge Tree Admissions");
   return lines.join("\n");
 }
 
@@ -262,10 +266,10 @@ function renderAcceptedHtml(args: {
     h1("You're in.") +
       p(`Hi ${esc(firstName(args.fullName))},`) +
       p(
-        `You've been accepted onto <strong>${esc(args.program)}</strong> at Veya. Congratulations.`,
+        `You've been accepted onto <strong>${esc(args.program)}</strong> at Knowledge Tree International Institute. Congratulations.`,
       ) +
       credentials +
-      button(`${SITE_URL}/login`, "Sign in to Veya") +
+      button(`${SITE_URL}/login`, "Sign in to Knowledge Tree") +
       p(
         `<span style="font-size:13px;color:rgba(28,26,25,.55);">Button not working? Go to <a href="${SITE_URL}/login" style="color:${INDIGO};font-weight:bold;">${SITE_URL}/login</a></span>`,
       ),
@@ -281,11 +285,11 @@ function renderResetText(args: {
   expiresInMinutes: number;
 }): string {
   return [
-    "Veya — reset your password",
+    "Knowledge Tree International Institute — reset your password",
     "",
     `Hi ${firstName(args.fullName)},`,
     "",
-    "Someone asked to reset the password on your Veya account. Open this link to choose a new one:",
+    "Someone asked to reset the password on your Knowledge Tree account. Open this link to choose a new one:",
     "",
     `  ${resetLink(args.token)}`,
     "",
@@ -293,7 +297,7 @@ function renderResetText(args: {
     "",
     "If this wasn't you, ignore this email — your password stays as it is.",
     "",
-    "Veya",
+    "Knowledge Tree International Institute",
     SITE_URL,
   ].join("\n");
 }
@@ -308,7 +312,7 @@ function renderResetHtml(args: {
     h1("Reset your password.") +
       p(`Hi ${esc(firstName(args.fullName))},`) +
       p(
-        "Someone asked to reset the password on your Veya account. Choose a new one here:",
+        "Someone asked to reset the password on your Knowledge Tree account. Choose a new one here:",
       ) +
       button(href, "Choose a new password") +
       p(
@@ -322,7 +326,7 @@ function renderResetHtml(args: {
 
 function renderRejectedText(args: { fullName: string; program: string }): string {
   return [
-    "Veya — about your application",
+    "Knowledge Tree International Institute — about your application",
     "",
     `Hi ${firstName(args.fullName)},`,
     "",
@@ -332,7 +336,7 @@ function renderRejectedText(args: { fullName: string; program: string }): string
     "",
     "We wish you the very best.",
     "",
-    "Veya Admissions",
+    "Knowledge Tree Admissions",
     SITE_URL,
   ].join("\n");
 }

@@ -52,7 +52,7 @@ export const sidebardata = {
   // page, for every tenant.
   teams: [
     {
-      name: "Veya",
+      name: "Knowledge Tree",
       logo: School,
     },
   ],

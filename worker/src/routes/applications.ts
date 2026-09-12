@@ -45,7 +45,7 @@ const applicationOut = (row: Row): Row => {
 applications.post("/", async (c) => {
   // 5/min/IP, before any database or email work. This is the only write path on
   // the API with no session behind it, and it now triggers an outbound Resend
-  // call — without a limiter it is a way to make Veya send mail on demand.
+  // call — without a limiter it is a way to make the institute send mail on demand.
   const ip = c.req.header("CF-Connecting-IP") ?? "anon";
   const rl = await c.env.RL_APPLY.limit({ key: ip });
   if (!rl.success) {

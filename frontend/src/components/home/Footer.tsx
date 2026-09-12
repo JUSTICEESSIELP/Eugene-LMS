@@ -7,7 +7,7 @@ const Footer = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
           <div className="space-y-6">
-            <Logo />
+            <Logo tone="dark" size="lg" />
             <p className="text-cream/60 leading-relaxed">
               Redefining higher education through technology, innovation, and
               global connectivity. Join the frontier.
@@ -152,7 +152,7 @@ const Footer = () => {
         </div>
 
         <div className="border-t border-cream/15 pt-8 flex flex-col md:flex-row items-center justify-between text-sm text-cream/50">
-          <p>© 2026 Veya University. All rights reserved.</p>
+          <p>© 2026 Knowledge Tree International Institute Ghana. All rights reserved.</p>
           <div className="flex space-x-6 mt-4 md:mt-0">
             <a
               href="#"

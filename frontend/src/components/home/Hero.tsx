@@ -24,7 +24,7 @@ const Hero = () => {
             </h1>
 
             <p className="text-xl text-ink/70 max-w-lg">
-              Veya is a technology-driven university built for the next
+              Knowledge Tree International Institute is a technology-driven university built for the next
               generation of innovators, engineers, and digital artists.
             </p>
 
@@ -63,7 +63,7 @@ const Hero = () => {
             <div className="relative rounded-[2rem] overflow-hidden shadow-[0_24px_60px_-24px_rgba(16,16,20,0.45)]">
               <img
                 src="https://images.unsplash.com/photo-1562774053-701939374585?auto=format&fit=crop&q=80&w=1200"
-                alt="Veya campus"
+                alt="Knowledge Tree International Institute campus"
                 className="w-full h-auto object-cover"
               />
             </div>

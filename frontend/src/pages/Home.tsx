@@ -44,7 +44,7 @@ const Home = () => {
         <section className="py-24 bg-brand text-white">
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h3 className="display-xl text-4xl md:text-6xl mb-12">
-              “The multidisciplinary approach at Veya prepared me for a career
+              “The multidisciplinary approach at Knowledge Tree prepared me for a career
               that didn't exist when I started my degree.”
             </h3>
             <div className="flex flex-col items-center">

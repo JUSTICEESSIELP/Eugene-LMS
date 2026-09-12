@@ -73,7 +73,7 @@ const ResetPassword = () => {
   return (
     <div className="min-h-svh flex flex-col items-center justify-center gap-6 p-6">
       <Link to="/" className="flex items-center gap-2 font-medium">
-        <Logo markClassName="h-7 w-7" />
+        <Logo size="sm" />
       </Link>
 
       <div className="w-full max-w-sm">

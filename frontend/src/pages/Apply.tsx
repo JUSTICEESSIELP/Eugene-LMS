@@ -74,7 +74,7 @@ const Apply = () => {
           <CheckCircle2 className="w-16 h-16 text-brand mx-auto" />
           <h1 className="display-page text-3xl">Application received</h1>
           <p className="text-muted-foreground">
-            Thanks for applying to Veya. Our admissions team will review your
+            Thanks for applying to Knowledge Tree International Institute. Our admissions team will review your
             application and get back to you by email.
           </p>
           <Button asChild className="bg-brand text-white hover:bg-brand-strong">
@@ -97,7 +97,7 @@ const Apply = () => {
         </Link>
 
         <div className="space-y-3">
-          <Logo markClassName="h-8 w-8" />
+          <Logo size="md" />
           <h1 className="text-4xl font-bold tracking-tight">Start your application</h1>
           <p className="text-muted-foreground">
             Tell us who you are and what you want to study. It takes about a minute —

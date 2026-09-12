@@ -13,7 +13,7 @@ const clickCta = async (page: Page, name: string | RegExp, which: "first" | "las
 test.describe("landing page", () => {
   test("every call-to-action navigates somewhere", async ({ page }) => {
     await page.goto("/");
-    await expect(page).toHaveTitle(/Veya/);
+    await expect(page).toHaveTitle(/Knowledge Tree/);
 
     await expect(await clickCta(page, /Start Application/i), "hero CTA").toBe("/apply");
 

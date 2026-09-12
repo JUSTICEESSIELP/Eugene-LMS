@@ -53,15 +53,25 @@ test("every admin page renders without an error boundary", async ({ page }) => {
   expect(failures, `Pages with problems:\n${failures.join("\n")}`).toEqual([]);
 });
 
-test("the brand is consistent and the favicon is not Vite's default", async ({ page }) => {
+test("the brand is consistent and every icon actually serves an image", async ({ page }) => {
   await page.goto("/");
-  await expect(page).toHaveTitle(/Veya/);
+  await expect(page).toHaveTitle(/Knowledge Tree/);
 
-  const icon = await page.locator('link[rel="icon"]').getAttribute("href");
-  expect(icon, "favicon should not be the Vite placeholder").not.toMatch(/vite\.svg/);
+  // The SPA fallback answers unknown paths with index.html and a 200, so a
+  // status check alone would pass for a missing file — assert the type too.
+  const hrefs = await page
+    .locator('link[rel="icon"], link[rel="apple-touch-icon"]')
+    .evaluateAll((els) => els.map((e) => (e as HTMLLinkElement).getAttribute("href")!));
+  expect(hrefs.length, "at least one icon link").toBeGreaterThan(0);
 
-  // The icon must actually resolve, not 404 into a broken tab image.
-  const res = await page.request.get(new URL(icon!, page.url()).toString());
-  expect(res.status(), `${icon} should be served`).toBe(200);
-  console.log(`  favicon: ${icon} -> ${res.status()} ${res.headers()["content-type"]}`);
+  for (const href of [...hrefs, "/brand/kti-logo.png", "/brand/kti-logo-on-dark.png", "/brand/kti-mark.png"]) {
+    expect(href, "favicon should not be a starter placeholder").not.toMatch(/vite\.svg|favicon\.svg/);
+    const res = await page.request.get(new URL(href, page.url()).toString());
+    expect(res.status(), `${href} should be served`).toBe(200);
+    expect(res.headers()["content-type"], `${href} should be an image`).toMatch(/^image\//);
+    console.log(`  ${href} -> ${res.status()} ${res.headers()["content-type"]}`);
+  }
+
+  // And the logo on the page is the institute's, not a leftover.
+  await expect(page.getByRole("img", { name: /Knowledge Tree International Institute/i }).first()).toBeVisible();
 });

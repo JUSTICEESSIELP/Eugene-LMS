@@ -68,6 +68,6 @@
   // address must sit on a domain verified in Resend.
   "vars": {
     "GEMINI_MODEL": "gemini-2.5-flash",
-    "RESEND_FROM": "Veya <noreply@mail.offgridlabs.org>"
+    "RESEND_FROM": "Knowledge Tree International Institute <noreply@mail.offgridlabs.org>"
   }
 }

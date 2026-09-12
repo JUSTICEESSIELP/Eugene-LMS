@@ -9,7 +9,11 @@ import { parseInt_, parseString } from "../lib/validate";
 const classes = new Hono<AppEnv>();
 
 // GET /api/classes — Private/Admin, academicYear + classTeacher populated
-classes.get("/", protect, authorize(["admin"]), async (c) => {
+// Teachers need to read the class list: the AI quiz dialog and the timetable
+// class picker both load it. Admin-only, the dialog's Promise.all failed as a
+// whole and a teacher saw empty Subject and Class dropdowns, so no teacher could
+// generate a quiz at all. Writes stay admin-only below.
+classes.get("/", protect, authorize(["admin", "teacher"]), async (c) => {
   const url = new URL(c.req.url);
   const { page, limit, offset } = paginate(url);
   const search = url.searchParams.get("search");
